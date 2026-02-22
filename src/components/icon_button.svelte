@@ -1,17 +1,20 @@
 <script lang="ts">
     type Props = {
         path:string,
-        label:string
+        label:string,
+        action:()=>void
     };
     let { 
         path,
-        label
+        label,
+        action
     }:Props = $props();
 </script>
 
 <button
     class="iconbutton"
     aria-label={label}
+    onclick={action}
 >
     <svg viewBox="0 0 24 24">
         <path class="iconsvg" d={path}/>

@@ -1,19 +1,78 @@
 <script lang="ts">
+    import { mdiWeatherCloudy } from '@mdi/js';
     import { mdiCctv } from '@mdi/js';
 	import { mdiCog } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
-    import IconTab from './icon_tab.svelte';
+    import IconTab, { type TabProps } from './icon_tab.svelte';
+
+    enum MainField {
+        iframe
+    };
+
+    type IFrameMeta = {
+        url:string,
+        title:string
+    };
+
+    type Main = {
+        field:MainField,
+        meta:IFrameMeta|undefined
+    };
+
+    let main:Main|undefined = $state(undefined);
+
+    let tabs:TabProps[] =
+    [
+        {
+			action: function (): void {
+				throw new Error('Function not implemented.');
+			},
+			icon_label: "weather",
+			icon_path: mdiWeatherCloudy
+		},
+        {
+			action:  () => {
+                console.debug("cameras");
+				main={
+                    field: MainField.iframe,
+                    meta:{
+                        url:"http://10.10.10.10:8123/dashboard-cameras/0",
+                        title: "Dashboard Cameras"
+                    }
+                }
+			},
+			icon_label: "cameras",
+			icon_path: mdiCctv
+		},
+    ];
+
+    let refresh:TabProps = {
+        action: () => {
+            throw new Error('Function not implemented.');
+        },
+        icon_label: "refresh",
+        icon_path: mdiRefresh
+    };
+    
+    tabs[1].action();
+
 </script>
 
 <div class="main">
     <div class="tab-row">
-        <IconTab icon_label="cameras" icon_path={mdiCctv}/>
+        {#each tabs as tab}
+            <IconTab props={tab}/>
+        {/each}
         <div class="spacer"></div>
-        <IconTab icon_label="refresh" icon_path={mdiRefresh}/>
+        <IconTab props={refresh}/>
     </div>
-    <iframe class="full-width" src="http://10.10.10.10:8123/dashboard-cameras/0" title="Dashboard-Cameras">
-        <p>iframe unsupported</p>
-    </iframe>
+    {#if main !== undefined}
+        {#if main.field === MainField.iframe && main.meta !== undefined}
+            <iframe class="full-width" src={main.meta.url} title={main.meta.title}>
+                <p>iframe unsupported</p>
+            </iframe>
+        {/if}
+    {/if}
 </div>
 
 <style>

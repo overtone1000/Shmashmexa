@@ -1,22 +1,27 @@
 <script lang="ts">
 	import IconButton from "./icon_button.svelte";
 
-    type TabProps = {
+    export type TabProps = {
         action:()=>void,
         icon_path:string,
         icon_label:string
     };
-    let { 
-        action,
-        icon_path,
-        icon_label
-    }:TabProps = $props();
+
+    type TabPropsCont = {props:TabProps};
+    let propscont:TabPropsCont = $props();
 </script>
 
+<div class="tab">
 <IconButton
-    path={icon_path}
-    label={icon_label}
+    path={propscont.props.icon_path}
+    label={propscont.props.icon_label}
+    action={propscont.props.action}
 />
+</div>
 
 <style>
+    .tab
+    {
+        margin-right: 1px
+    }
 </style>
