@@ -6,11 +6,35 @@
         {
             "type": "npm",
             "script": "dev",
-            "path": "src",
+            "path": "frontend/src",
             "group": "build",
             "problemMatcher": [],
             "label": "npm: dev",
-            "detail": "vite dev"
+            "detail": "vite dev",
         },
+        {
+            "type": "shell",
+            "command": "cargo build",
+            "group": "build",
+            "label": "Cargo: Build",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "options": {
+                "cwd":"backend"
+            }
+        },
+        {
+            "type": "shell",
+            "command": "cargo run 30125 443",
+            "group": "build",
+            "label": "Cargo: Run With Test Args",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "options": {
+                "cwd":"backend"
+            }
+        }
     ]
 }
