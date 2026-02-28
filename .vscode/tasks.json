@@ -26,7 +26,13 @@
         },
         {
             "type": "shell",
-            "command": "cargo run 30125 443",
+            "command": "cargo",
+            "args": [
+                "run",
+                "--",
+                "30125",
+                "443"
+            ],
             "group": "build",
             "label": "Cargo: Run With Test Args",
             "problemMatcher": [

@@ -5,7 +5,9 @@ use std::{
     net::{IpAddr, Ipv4Addr},
 };
 
+use hyper_services::service::stateless_service::StatelessService;
 use hyper_services::{service::stateful_service::StatefulService, spawn_server};
+use shmashmexa_backend::services::internal::InternalService;
 
 #[tokio::main]
 async fn main() {
@@ -13,7 +15,9 @@ async fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let internal_port = match args.get(3) {
+    println!("Args: {:?}",args);
+
+    let internal_port = match args.get(1) {
         Some(port) => match port.parse::<u16>() {
             Ok(port) => port,
             Err(e) => {
@@ -28,7 +32,7 @@ async fn main() {
         }
     };
 
-    let external_port = match args.get(3) {
+    let external_port = match args.get(2) {
         Some(port) => match port.parse::<u16>() {
             Ok(port) => port,
             Err(e) => {
@@ -45,30 +49,20 @@ async fn main() {
 
     //Create event servers
     let event_server = {
-        println!("Creating pixel strip manager.");
-        let internal_service = PixelStripManager::new(pixel_strip, DISPLAY_FREQUENCY, conn);
 
-        //demos::red_green_blue(conn, pixels)?;
-        //demos::hue_progression(conn, pixels)?;
-        //demos::rainbow_oscillation(conn, pixel_strip).unwrap();
-
-        println!("Creating LED Command Handler.");
-
-        let handler = LedCommandHandler::new(pixel_strip_manager);
-
-        println!("Starting DDP Service");
+        let internal_service:StatelessService<InternalService>=StatelessService::create();
 
         spawn_server(
-            IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-            service_port,
-            StatefulService::create(handler),
+            IpAddr::V4(Ipv4Addr::LOCALHOST),
+            internal_port,
+            internal_service,
         )
     };
 
     println!("Services Running");
 
     match event_server.await {
-        Ok(_) => println!("Closed DDP Service Gracefully"),
+        Ok(_) => println!("Closed internal service gracefully"),
         Err(e) => {
             println!("DDP Service Failure");
             println!("{}", e.to_string());

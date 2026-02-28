@@ -1,27 +1,19 @@
-use std::{collections::BTreeMap, net::SocketAddr, sync::{Arc, RwLock}};
 
 use hyper::{body::Incoming, Method, Request, Response};
 use hyper_services::{
-    commons::HandlerResult, request_processing::get_request_body_as_string, response_building::{bad_request, full_to_boxed_body}, service::stateful_service::StatefulHandler
+    commons::HandlerResult, request_processing::get_request_body_as_string, response_building::{bad_request, full_to_boxed_body}, service::{stateless_service::StatelessHandler}
 };
-use serde::{Deserialize, Serialize};
-use serde_json::to_string;
-
-use crate::pixels::{pixelstripcommand::PixelStripCommand, pixelstripmanager::PixelStripManager};
-
 #[derive(Clone)]
 pub struct InternalService {
 }
 
-impl StatefulHandler for InternalService {
-
-    async fn handle_request(self: Self, request: Request<Incoming>) -> HandlerResult {
-        let method: hyper::Method = request.method().clone();
-        //let path = request.uri().path().to_string();
-        
-        match method {
+impl StatelessHandler for InternalService {
+    async fn handle_request(request: Request<Incoming>) -> HandlerResult {
+        let (parts, incoming) = request.into_parts();
+                        
+        match parts.method {
             Method::POST => {
-                let body= match get_request_body_as_string(request.into_body()).await
+                let body= match get_request_body_as_string(incoming).await
                 {
                     Ok(body)=>body,
                     Err(e)=>{
@@ -30,30 +22,20 @@ impl StatefulHandler for InternalService {
                     }
                 };
 
-                let command:PixelStripCommand=match serde_json::from_str(&body){
-                    Ok(body)=>body,
-                    Err(e)=>{
-                        eprintln!("Couldn't deserialize pixel strip command. {:?}",e);
-                        eprintln!("Received string was: {}",body);
-                        return Ok(bad_request());
-                    }
-                };
-
-                println!("Received {:?}",command);
-
-                {
-                    self.pixel_strip_manager.queue_command(command);
-                }
+                println!("Received POST {:?} with body {:?}",parts.uri, body);
 
                 return Ok(Response::new(full_to_boxed_body("Ok")));
+            },
+            Method::GET => {
+
+                println!("Received GET for {:?}",parts.uri);
+
+                return hyper_services::response_building::send_file(crate::INTERNAL_SERVICE_DIR,parts.uri.path()).await;
             },
             method=>{
                 eprintln!("Received unexpected method {:?}",method);
                 return Ok(bad_request());
             }
-        }
-        
-        //return Ok(not_found());
-        //return Ok(bad_request());        
+        }   
     }
 }
