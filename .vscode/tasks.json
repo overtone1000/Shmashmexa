@@ -33,7 +33,10 @@
                 "$rustc"
             ],
             "options": {
-                "cwd":"backend"
+                "cwd":"backend",
+                "env": {
+                    "DEVELOPMENT_MODE":"true"
+                }
             }
         }
     ]
