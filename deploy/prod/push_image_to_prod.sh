@@ -4,20 +4,27 @@ set -e
 
 source "./constants.sh"
 
+PODMAN_HOST="ssh://$SSH_DEST:22/run/podman/podman.sock"
+
 #Function to push an image
 push_image_to_prod ( ) {
     
+    echo "Removing any priors"
+    rm --force /tmp/$IMAGE_NAME
+    ssh -l $USER $SERVER_IP "rm --force /tmp/$IMAGE_NAME"
+
     echo "Creating archive"
-    podman push $IMAGE_NAME oci-archive:/tmp/$IMAGE_NAME
+    podman save --format oci-archive --output /tmp/$IMAGE_NAME $IMAGE_NAME:latest
 
     echo "Transferring archive"
-    scp -r /tmp/$IMAGE_NAME $USER@$SERVER_IP:/tmp/$IMAGE_NAME
+    scp -v -r /tmp/$IMAGE_NAME $SSH_DEST:/tmp/$IMAGE_NAME
 
     echo "Pulling image from archive on remote"
-    podman --remote pull $IMAGE_NAME oci-archive:/tmp/$IMAGE_NAME
+    #podman --remote --url $PODMAN_HOST load --input /tmp/$IMAGE_NAME
+    ssh -l $USER $SERVER_IP "podman load --input /tmp/$IMAGE_NAME"
 
-    echo "Cleaning up"
-    ssh -l root $SERVER_IP "rm /tmp/$IMAGE_NAME"
+    #echo "Cleaning up"
+    #ssh -l $USER $SERVER_IP "rm /tmp/$IMAGE_NAME"
 }
 
 #Push image
