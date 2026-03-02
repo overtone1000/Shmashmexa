@@ -4,7 +4,8 @@ const DEV_MODE_ENV_KEY:&str="DEVELOPMENT_MODE";
 #[tokio::main]
 async fn main() {
 
-    let development_mode = match std::env::var(DEV_MODE_ENV_KEY)
+    //Currently doesn't do anything. May remove later.
+    let _development_mode = match std::env::var(DEV_MODE_ENV_KEY)
     {
         Ok(val)=>{
             println!("Running in development mode.");
@@ -16,5 +17,5 @@ async fn main() {
         }
     };
 
-    shmashmexa_backend::start_and_run(development_mode).await
+    shmashmexa_backend::start_and_run().await
 }

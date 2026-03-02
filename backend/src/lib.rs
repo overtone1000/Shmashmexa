@@ -14,26 +14,19 @@ const INTERNAL_SERVICE_DIR:&str="/var/www/internal";
 const INTERNAL_PORT:u16=30125;
 const EXTERNAL_PORT:u16=443;
 
-pub async fn start_and_run(development_mode:bool) {
+pub async fn start_and_run() {
     loop {
         
         println!("Starting services.");
 
         //Create event servers
-        
-        let internal_ip:Ipv4Addr = match development_mode
-        {
-            true=>Ipv4Addr::UNSPECIFIED,
-            false=>Ipv4Addr::LOCALHOST
-        };
-
         let internal_service = {
 
             let internal_service:StatelessService<InternalService>=StatelessService::create();
             println!("Internal service created.");
 
             spawn_server(
-                IpAddr::V4(internal_ip),
+                IpAddr::V4(Ipv4Addr::UNSPECIFIED),
                 INTERNAL_PORT,
                 internal_service,
             )
