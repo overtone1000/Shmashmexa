@@ -102,7 +102,9 @@
         flex-shrink: true;
         width:100%;
     }
-    
+    * {
+        color-scheme: dark;
+    }
     /*This is for kiosks, so hide the cursor*/
     /*Doesn't work with iframe!*/
     /*
