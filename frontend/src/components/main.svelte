@@ -4,6 +4,7 @@
 	import { mdiCog } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
     import IconTab, { type TabProps } from './icon_tab.svelte';
+	import { onMount } from 'svelte';
 
     enum MainField {
         iframe
@@ -55,6 +56,23 @@
     };
     
     tabs[1].action();
+
+    onMount(()=>{
+        const socket_url = "ws:/"+location.host;
+        console.debug("Opening websocket on");
+        const socket = new WebSocket(socket_url);
+
+        // Connection opened
+        socket.addEventListener("open", (event) => {
+            console.debug("Connection opened.");
+            socket.send("Hello Server!");
+        });
+
+        // Listen for messages
+        socket.addEventListener("message", (event) => {
+            console.log("Message from server ", event.data);
+        });
+    });
 
 </script>
 

@@ -12,11 +12,27 @@ use hyper_services::spawn_server;
 use crate::services::external::ExternalService;
 use crate::services::internal::InternalService;
 
-const INTERNAL_SERVICE_DIR:&str="/var/www/internal";
-const INTERNAL_PORT:u16=30125;
-const EXTERNAL_PORT:u16=443;
+#[derive(Debug)]
+pub struct InitializationParameters
+{
+    internal_service_static_directory:String,
+    internal_port:u16,
+    external_port:u16
+}
 
-pub async fn start_and_run() {
+impl InitializationParameters
+{
+    pub fn new(internal_service_static_directory:&str, internal_port:u16, external_port:u16)->InitializationParameters
+    {
+        InitializationParameters { 
+            internal_service_static_directory:internal_service_static_directory.to_string(), 
+            internal_port, 
+            external_port 
+        }
+    }
+}
+
+pub async fn start_and_run(params:InitializationParameters) {
     loop {
         
         println!("Starting services.");
@@ -24,12 +40,12 @@ pub async fn start_and_run() {
         //Create event servers
         let internal_service = {
 
-            let handler = InternalService{};
+            let handler = InternalService::new(&params);
             let internal_service=StatefulService::create(handler);
             
             spawn_server(
                 IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                INTERNAL_PORT,
+                params.internal_port,
                 internal_service,
             )
         };
@@ -41,7 +57,7 @@ pub async fn start_and_run() {
 
             spawn_server(
                 IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                EXTERNAL_PORT,
+                params.external_port,
                 external_service,
             )
         };

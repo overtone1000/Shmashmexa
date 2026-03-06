@@ -9,6 +9,17 @@ use websocket::WebSocketStreamNext;
 
 #[derive(Clone)]
 pub struct InternalService {
+    internal_service_static_directory:String,
+}
+
+impl InternalService
+{
+    pub fn new(initialization_parameters:&crate::InitializationParameters)->InternalService
+    {
+        InternalService { 
+            internal_service_static_directory: initialization_parameters.internal_service_static_directory.clone()
+        }
+    }
 }
 
 impl StatefulHandler for InternalService {
@@ -16,7 +27,8 @@ impl StatefulHandler for InternalService {
 
         if hyper_tungstenite::is_upgrade_request(&request) {
             let (response, websocket) = hyper_tungstenite::upgrade(request, None)?;
-
+            
+            println!("Received websocket request.");
             // Spawn a task to handle the websocket connection.
             tokio::spawn(async move {
                 serve_websocket(websocket).await
@@ -47,7 +59,7 @@ impl StatefulHandler for InternalService {
 
                     println!("Received GET for {:?}",parts.uri);
 
-                    return hyper_services::response_building::send_file(crate::INTERNAL_SERVICE_DIR,parts.uri.path()).await;
+                    return hyper_services::response_building::send_file(&self.internal_service_static_directory,parts.uri.path()).await;
                 },
                 method=>{
                     eprintln!("Received unexpected method {:?}",method);
@@ -68,18 +80,19 @@ async fn serve_websocket(websocket: HyperWebsocket) -> () {
         };
     };
     
+    println!("Serving websocket");
     match WebSocketStreamNext::get_next(websocket).await
     {
         Ok(stream_next) => {           
-
+            println!("Got next.");
             match stream_next.get_message() {
                 Message::Text(msg) => {
                     println!("Received text message: {msg}");
-                    send_response(stream_next, Message::text("Thank you, come again."));
+                    send_response(stream_next, Message::text("Thank you, come again.")).await;
                 },
                 Message::Binary(msg) => {
                     println!("Received binary message: {msg:02X?}");
-                    send_response(stream_next, Message::binary(b"Thank you, come again.".to_vec()));
+                    send_response(stream_next, Message::binary(b"Thank you, come again.".to_vec())).await;
                 },
                 Message::Ping(msg) => {
                     // No need to send a reply: tungstenite takes care of this for you.
@@ -97,6 +110,7 @@ async fn serve_websocket(websocket: HyperWebsocket) -> () {
                     }
                 },
                 Message::Frame(_msg) => {
+                    println!("Unanticipated Frame.");
                     unreachable!();
                 }
             }            

@@ -13,6 +13,16 @@
             "detail": "vite dev",
         },
         {
+            "type": "npm",
+            "script": "build",
+            "path": "frontend/src",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "npm: build",
+            "detail": "vite build",
+        },
+        /*
+        {
             "type": "shell",
             "command": "cargo build",
             "group": "build",
@@ -24,11 +34,12 @@
                 "cwd":"backend"
             }
         },
+        */
         {
             "type": "shell",
             "command": "cargo run",
             "group": "build",
-            "label": "Cargo: Run",
+            "label": "Run Backend in Dev Mode",
             "problemMatcher": [
                 "$rustc"
             ],
@@ -38,6 +49,6 @@
                     "DEVELOPMENT_MODE":"true"
                 }
             }
-        }
+        },
     ]
 }
