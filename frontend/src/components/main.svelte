@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { mdiWeatherCloudy } from '@mdi/js';
-    import { mdiCctv } from '@mdi/js';
-	import { mdiCog } from '@mdi/js';
+    import { mdiClock } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
     import IconTab, { type TabProps } from './icon_tab.svelte';
 	import { onMount } from 'svelte';
@@ -9,7 +7,8 @@
     console.debug("Start init.");
 
     enum MainField {
-        iframe
+        iframe,
+        component
     };
 
     type IFrameMeta = {
@@ -17,9 +16,14 @@
         title:string
     };
 
+    enum ComponentType {
+        clock
+    };
+
     type Main = {
         field:MainField,
-        meta:IFrameMeta|undefined
+        iframe_meta?:IFrameMeta
+        component_meta?:ComponentType
     };
 
     let main:Main|undefined = $state(undefined);
@@ -32,6 +36,17 @@
         },
         icon_label: "refresh",
         icon_path: mdiRefresh
+    };
+
+    const clock:TabProps = {
+        action: () => {
+            main={
+                field: MainField.component,
+                component_meta:ComponentType.clock
+            }
+        },
+        icon_label: "clock",
+        icon_path: mdiClock
     };
 
     function open_socket(){
@@ -59,32 +74,6 @@
     };
 
     function build_tabs(tabs_config:TabsConfig[]) {
-        /*
-            [
-                {
-                    action: function (): void {
-                        throw new Error('Function not implemented.');
-                    },
-                    icon_label: "weather",
-                    icon_path: mdiWeatherCloudy
-                },
-                {
-                    action:  () => {
-                        console.debug("cameras");
-                        main={
-                            field: MainField.iframe,
-                            meta:{
-                                url:"http://10.10.10.10:8123/dashboard-kiosk/1",
-                                title: "Dashboard Cameras"
-                            }
-                        }
-                    },
-                    icon_label: "cameras",
-                    icon_path: mdiCctv
-                },
-            ];
-        */
-
         if(tabs_config.length>0)
         {
             tabs = [];
@@ -98,7 +87,7 @@
                         action: ()=>{
                             main={
                                 field: MainField.iframe,
-                                meta:{
+                                iframe_meta:{
                                     url: tabconfig.url,
                                     title: tabconfig.title
                                 }
@@ -146,14 +135,21 @@
             <IconTab props={tab}/>
         {/each}
         <div class="spacer"></div>
+        <IconTab props={clock}/>
+        <div class="spacer"></div>
         <IconTab props={refresh}/>
     </div>
     {#if main !== undefined}
-        {#if main.field === MainField.iframe && main.meta !== undefined}
-            <iframe class="full-width" src={main.meta.url} title={main.meta.title}>
+        {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
+            <iframe class="full-width" src={main.iframe_meta.url} title={main.iframe_meta.title}>
                 <p>iframe unsupported</p>
             </iframe>
             <div class="hide-cursor"></div>
+        {:else if main.field === MainField.component && main.component_meta !== undefined}
+            {if main.component_meta === ComponentType.clock}
+            {
+                
+            }
         {/if}
     {/if}
 </div>

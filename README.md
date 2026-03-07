@@ -1,5 +1,11 @@
 # Shmashmexa
 A web application to serve as a simple home smart display device.
 
-## Browser mod
-May need [browser mod](https://github.com/thomasloven/hass-browser_mod)
+## Home Assistant Modifications
+
+### Bypass Login
+
+
+### Kiosk Mode
+[Kiosk mode](https://github.com/NemesisRE/kiosk-mode)
+If top bar is hidden, need to access dash with `?disable_km` at the end of the URL to enable editing.
