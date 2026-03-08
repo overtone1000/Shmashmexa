@@ -2,12 +2,14 @@
     type Props = {
         path:string,
         label:string,
-        action:()=>void
+        action:()=>void,
+        disabled?:boolean
     };
     let { 
         path,
         label,
-        action
+        action,
+        disabled
     }:Props = $props();
 </script>
 
@@ -15,6 +17,7 @@
     class="iconbutton"
     aria-label={label}
     onclick={action}
+    disabled={disabled}
 >
     <svg viewBox="0 0 24 24">
         <path class="iconsvg" d={path}/>

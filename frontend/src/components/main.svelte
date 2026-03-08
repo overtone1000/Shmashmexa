@@ -4,7 +4,7 @@
     import IconTab, { type TabProps } from './icon_tab.svelte';
 	import { onMount } from 'svelte';
 	import Time from './time.svelte';
-	import TimerPage, { type TimeState as TimerState } from './timer_page.svelte';
+	import TimerPage, { type Timer, type TimerState as TimerState } from './timer_page.svelte';
 
     console.debug("Start init.");
 
@@ -30,7 +30,7 @@
 
     let main:Main|undefined = $state(undefined);
 
-    const timer_state:TimerState = $state({});
+    const timers:Timer[] = $state([]);
 
     let tabs:TabProps[]|undefined = $state(undefined);
     
@@ -152,7 +152,7 @@
             <div class="hide-cursor"></div>
         {:else if main.field === MainField.component && main.component_meta !== undefined}
             {#if main.component_meta === ComponentType.clock}
-                <TimerPage state={timer_state}/>
+                <TimerPage timers={timers}/>
             {/if}
         {/if}
     {/if}

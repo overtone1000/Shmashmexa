@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from "svelte";
     import "@fontsource/inter";
+	import { format_doubledigit } from "$lib/time";
     
     let time=$state(new Date());
 
@@ -9,7 +10,7 @@
     {
         console.debug("Update.");
         time=new Date();
-        update_id=setTimeout(update,60-time.getSeconds());
+        update_id=setTimeout(update,(60-time.getSeconds())*1000);
     }
 
     onMount(()=>{
@@ -34,19 +35,6 @@
         "November",
         "December"
     ];
-
-    function format_doubledigit(num:number)
-    {
-        let str=num.toString();
-        if(str.length===2)
-        {
-            return str;
-        }
-        else
-        {
-            return "0"+str;
-        }
-    }
 </script>
 
 <div class="main">
