@@ -32,6 +32,7 @@
         padding:0px;
         margin: 0px;
         border-width: 2px;
+        margin-right: var(--right_margin, "0px");
     }
     .iconsvg{
         fill:none;

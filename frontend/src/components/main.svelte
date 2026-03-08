@@ -136,9 +136,8 @@
 <div class="main">
     <div class="tab-row">
         {#each tabs as tab}
-            <IconTab props={tab}/>
+            <IconTab --right_margin="4px" props={tab}/>
         {/each}
-        <div class="spacer"></div>
         <IconTab props={clock}/>
         <div class="spacer"></div>
         <Time/>
