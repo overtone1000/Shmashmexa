@@ -1,8 +1,0 @@
-[Volume]
-User=root
-Group=wheel
-VolumeName=schmashmexa_config
-
-[Quadlet]
-#This should allow the volume service to start faster by skipping network dependencies.
-DefaultDependencies=false

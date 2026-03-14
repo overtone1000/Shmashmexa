@@ -9,7 +9,9 @@ hyper = { version = "1", features = ["full"] }
 hyper-services = { path = "../../trm-rust-libs/hyper-services" }
 websocket = { path = "../../trm-rust-libs/websocket" }
 #hyper-services = { git = "https://github.com/overtone1000/trm-rust-libs" } #use git for allow building remotely
-hyper-tungstenite = "0"
+hyper-tungstenite = "^0"
+rustls = "^0"
+rcgen = "^0"
 
 serde = "1"
 serde_json = "1"

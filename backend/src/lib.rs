@@ -8,6 +8,7 @@ use std::
 use hyper_services::service::stateful_service::StatefulService;
 use hyper_services::service::stateless_service::StatelessService;
 use hyper_services::{ConnectionProperties};
+use rustls::pki_types::pem::PemObject;
 
 use crate::services::external::ExternalService;
 use crate::services::internal::InternalService;
@@ -49,7 +50,8 @@ pub async fn start_and_run(params:InitializationParameters) {
                 IpAddr::V4(Ipv4Addr::UNSPECIFIED),
                 params.internal_port,
                 ConnectionProperties{
-                    with_upgrades:true
+                    with_upgrades:true,
+                    tls:None
                 }
             )
         };
@@ -58,11 +60,30 @@ pub async fn start_and_run(params:InitializationParameters) {
 
             let service:StatelessService<ExternalService>=StatelessService::create();
 
-            service.start(
-                IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                params.external_port,
-                ConnectionProperties::default()
-            )
+            match rcgen::generate_simple_self_signed(["10.10.10.154".to_string(),"127.0.0.1".to_string(),"localhost".to_string()])
+            {
+                Ok(keypair)=>{
+                    
+                    let certs =  vec![rustls::pki_types::CertificateDer::from(keypair.cert)];
+                    let keys = rustls::pki_types::PrivateKeyDer::from(keypair.signing_key);
+
+                    let certs:hyper_services::TlsCerts = hyper_services::TlsCerts{
+                        certs,
+                        keys
+                    };
+                    service.start(
+                        IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+                        params.external_port,
+                        ConnectionProperties{
+                            with_upgrades:false,
+                            tls:Some(certs)
+                        }
+                    )
+                },
+                Err(e)=>{
+                    panic!("Couldn't create certificates. {:?}",e);
+                }
+            }
         };
 
         println!("Services created.");

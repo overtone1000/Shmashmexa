@@ -6,12 +6,12 @@ const DEV_MODE_ENV_KEY:&str="DEVELOPMENT_MODE";
 const PROD_INTERNAL_SERVICE_DIR:&str="/var/www/internal";
 const PROD_CONFIG_DIR:&str="/var/www/config";
 const PROD_INTERNAL_PORT:u16=30125;
-const PROD_EXTERNAL_PORT:u16=30127;
+const PROD_EXTERNAL_PORT:u16=443;
 
 const DEV_INTERNAL_SERVICE_DIR:&str="../frontend/build";
 const DEV_CONFIG_DIR:&str="../dev";
 const DEV_INTERNAL_PORT:u16=PROD_INTERNAL_PORT;
-const DEV_EXTERNAL_PORT:u16=PROD_EXTERNAL_PORT;
+const DEV_EXTERNAL_PORT:u16=8443;
 
 #[tokio::main]
 async fn main() {

@@ -6,7 +6,19 @@ Wants=network.target
 [Container]
 ContainerName=shmashmexa
 Image=localhost/shmashmexa
-Pod=shmashmexa.pod
+
+#Internal web server
+PublishPort=30125:30125
+
+#Internal websocket
+PublishPort=30126:30126
+
+#External REST service
+#PublishPort=30127:30127
+#Don't need to publish, just keep internal for pod
+
+#External HTTPS
+PublishPort=443:443
 
 #Set time to be the same as host machine
 #Doesn't exist on nixos!
