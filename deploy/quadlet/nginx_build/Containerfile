@@ -1,0 +1,5 @@
+FROM docker.io/nginx/nginx:latest
+
+#Need to populate /etc/nginx/sites-available/
+#Need to create a symbolic link from site-enabled to sites-available
+#Need to generate tls key and store...where? I guess wherever config files say.
