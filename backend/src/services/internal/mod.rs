@@ -1,13 +1,16 @@
-use std::boxed;
+use std::{collections::VecDeque, sync::Arc, time::{Duration, Instant}};
 
 use hyper::{body::Incoming, Method, Request, Response};
 use hyper_services::{
     commons::HandlerResult, request_processing::get_request_body_as_string, response_building::{bad_request, box_existing_full, box_existing_response, bytes_to_boxed_body}, service::stateful_service::StatefulHandler
 };
 
-use hyper_tungstenite::{tungstenite, HyperWebsocket};
+use hyper_tungstenite::{HyperWebsocket, WebSocketStream, tungstenite};
+use tokio::sync::Mutex;
 use tungstenite::Message;
 use websocket::WebSocketStreamNext;
+
+use crate::commands::Command;
 
 const CONFIG_PREFACE:&str="/config";
 
@@ -15,6 +18,7 @@ const CONFIG_PREFACE:&str="/config";
 pub struct InternalService {
     internal_service_static_directory:String,
     config_static_directory:String,
+    commands:Arc<Mutex<VecDeque<Command>>>
 }
 
 impl InternalService
@@ -23,7 +27,108 @@ impl InternalService
     {
         InternalService { 
             internal_service_static_directory: initialization_parameters.internal_service_static_directory.clone(),
-            config_static_directory: initialization_parameters.config_static_directory.clone()
+            config_static_directory: initialization_parameters.config_static_directory.clone(),
+            commands:Arc::new(Mutex::new(VecDeque::new()))
+        }
+    }
+
+    pub async fn push_command(&mut self, command:Command)->()
+    {
+        let mut commands = self.commands.lock().await;
+        commands.push_back(command);
+        //println!("Added: Commands now contains {} commands.",commands.len());
+    }
+
+    async fn handle_websocket(self, websocket: HyperWebsocket) -> () {       
+
+        use futures_util::stream::StreamExt;
+        use futures_util::SinkExt;
+
+        println!("Serving websocket");
+        let mut websocketstream = match websocket.await{
+            Ok(websocketstream) => websocketstream,
+            Err(e) => {
+                eprintln!("Websocket error: {:?}",e);
+                return;
+            },
+        };
+
+        let target_wait = Duration::from_millis(100);
+
+        loop
+        {
+            let loop_start = std::time::Instant::now();
+
+            println!("Awaiting next, but this blocks until a message arrives.");
+            match websocketstream.next().
+            {
+                Some(stream_next) => {    
+                    match stream_next {
+                        Ok(msg)=>{
+                            match msg
+                            {
+                                Message::Text(msg) => {
+                                    println!("Received text message: {msg}");
+                                    match websocketstream.send(Message::text("Ok")).await
+                                    {
+                                        Ok(_)=>(),
+                                        Err(e)=>{
+                                            eprintln!("Websocket error: {:?}",e);
+                                        }
+                                    }
+                                },
+                                Message::Ping(_)=>println!("Ping"),
+                                Message::Pong(_)=>println!("Pong"),
+                                _=>() //Ignore all other message types.
+                            }
+                        },
+                        Err(e) => {
+                            eprintln!("Websocket error: {:?}",e);
+                            return;
+                        },
+                    }            
+                },
+                None => (),
+            }
+
+            println!("Processing commands.");
+            let mut commands = self.commands.lock().await;
+            while commands.len()>0
+            {
+                println!("Commands to process.");
+                match commands.pop_front()
+                {
+                    Some(command)=>{
+                        match serde_json::to_string(&command)
+                        {
+                            Ok(command_as_string)=>{
+                                //println!("Sending command.");
+                                match websocketstream.send(Message::text(command_as_string)).await
+                                {
+                                    Ok(_)=>{
+                                        println!("Command sent via websocket.");
+                                    },
+                                    Err(e)=>{
+                                        eprintln!("Websocket error: {:?}",e);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Couldn't deserialize command. {:?}",e);
+                            },
+                        }
+                    },
+                    None=>()
+                }
+            }
+
+            let wait = match loop_start.checked_add(target_wait)
+            {
+                Some(wait)=>wait.duration_since(Instant::now()),
+                None=>target_wait
+            };
+
+            //tokio::time::sleep(wait);
         }
     }
 }
@@ -31,109 +136,60 @@ impl InternalService
 impl StatefulHandler for InternalService {
     async fn handle_request(self:Self, request: Request<Incoming>) -> HandlerResult {
 
-        if hyper_tungstenite::is_upgrade_request(&request) {
-            let (response, websocket) = hyper_tungstenite::upgrade(request, None)?;
+        match hyper_tungstenite::is_upgrade_request(&request) {
+            true=>{
+                let (response, websocket) = hyper_tungstenite::upgrade(request, None)?;
             
-            println!("Received websocket request. Response is {:?}", response);
-            // Spawn a task to handle the websocket connection.
-            tokio::spawn(async move {
-                serve_websocket(websocket).await
-            });
+                println!("Received websocket request. Response is {:?}", response);
+                // Spawn a task to handle the websocket connection.
+                tokio::spawn(async move {
+                    self.handle_websocket(websocket).await
+                });
 
-            // Return the response so the spawned future can continue.
-            let boxed_response=box_existing_response(response);
-            println!("Boxed response is {:?}", boxed_response);
-            return Ok(boxed_response);
-        } else {
-            let (parts, incoming) = request.into_parts();
+                // Return the response so the spawned future can continue.
+                let boxed_response=box_existing_response(response);
+                println!("Boxed response is {:?}", boxed_response);
+                Ok(boxed_response)
+            },
+            false=>{
+                let (parts, incoming) = request.into_parts();
                         
-            match parts.method {
-                Method::POST => {
-                    let body= match get_request_body_as_string(incoming).await
-                    {
-                        Ok(body)=>body,
-                        Err(e)=>{
-                            eprintln!("Couldn't get request body. {:?}",e);
-                            return Ok(bad_request());
+                match parts.method {
+                    Method::POST => {
+                        let body= match get_request_body_as_string(incoming).await
+                        {
+                            Ok(body)=>body,
+                            Err(e)=>{
+                                eprintln!("Couldn't get request body. {:?}",e);
+                                return Ok(bad_request());
+                            }
+                        };
+
+                        println!("Received POST {:?} with body {:?}",parts.uri, body);
+
+                        Ok(Response::new(bytes_to_boxed_body("Ok")))
+                    },
+                    Method::GET => {
+                        //println!("Received GET for {:?}",parts.uri);                       
+                        
+                        if parts.uri.path().starts_with(CONFIG_PREFACE){
+                            let final_path=parts.uri.path().split_at(CONFIG_PREFACE.len()).1;
+                            //println!("Serving config {:?} - {:?}",&self.config_static_directory,final_path);
+                            hyper_services::response_building::send_file(&self.config_static_directory,final_path).await
                         }
-                    };
-
-                    println!("Received POST {:?} with body {:?}",parts.uri, body);
-
-                    return Ok(Response::new(bytes_to_boxed_body("Ok")));
-                },
-                Method::GET => {
-
-                    println!("Received GET for {:?}",parts.uri);
-                    
-                    
-                    if parts.uri.path().starts_with(CONFIG_PREFACE){
-                        let final_path=parts.uri.path().split_at(CONFIG_PREFACE.len()).1;
-                        println!("Serving config {:?} - {:?}",&self.config_static_directory,final_path);
-                        return hyper_services::response_building::send_file(&self.config_static_directory,final_path).await;
+                        else {
+                            //println!("Serving base.");
+                            hyper_services::response_building::send_file(&self.internal_service_static_directory,parts.uri.path()).await
+                        }
+                    },
+                    method=>{
+                        eprintln!("Received unexpected method {:?}",method);
+                        Ok(bad_request())
                     }
-                    else {
-                        //println!("Serving base.");
-                        return hyper_services::response_building::send_file(&self.internal_service_static_directory,parts.uri.path()).await;   
-                    }
-                },
-                method=>{
-                    eprintln!("Received unexpected method {:?}",method);
-                    return Ok(bad_request());
                 }
-            }
+            }   
         }
     }
 }
 
 
-/// Handle a websocket connection.
-async fn serve_websocket(websocket: HyperWebsocket) -> () {
-    let send_response = async |mut stream_next:WebSocketStreamNext, message:Message| {
-        match stream_next.send_message(message).await
-        {
-            Ok(_)=>(),
-            Err(e)=>eprintln!("{:?}",e)
-        };
-    };
-    
-    println!("Serving websocket");
-    match WebSocketStreamNext::get_next(websocket).await
-    {
-        Ok(stream_next) => {           
-            println!("Got next.");
-            match stream_next.get_message() {
-                Message::Text(msg) => {
-                    println!("Received text message: {msg}");
-                    send_response(stream_next, Message::text("Thank you, come again.")).await;
-                },
-                Message::Binary(msg) => {
-                    println!("Received binary message: {msg:02X?}");
-                    send_response(stream_next, Message::binary(b"Thank you, come again.".to_vec())).await;
-                },
-                Message::Ping(msg) => {
-                    // No need to send a reply: tungstenite takes care of this for you.
-                    println!("Received ping message: {msg:02X?}");
-                },
-                Message::Pong(msg) => {
-                    println!("Received pong message: {msg:02X?}");
-                }
-                Message::Close(msg) => {
-                    // No need to send a reply: tungstenite takes care of this for you.
-                    if let Some(msg) = &msg {
-                        println!("Received close message with code {} and message: {}", msg.code, msg.reason);
-                    } else {
-                        println!("Received close message");
-                    }
-                },
-                Message::Frame(_msg) => {
-                    println!("Unanticipated Frame.");
-                    unreachable!();
-                }
-            }            
-        },
-        Err(e) => {
-            eprintln!("Websocket error: {:?}",e);
-        },
-    }
-}

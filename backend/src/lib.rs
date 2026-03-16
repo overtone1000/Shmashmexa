@@ -1,4 +1,5 @@
 pub(crate) mod services;
+pub(crate) mod commands;
 
 
 use std::
@@ -9,7 +10,6 @@ use hyper_services::request_processing::Auth;
 use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
 use hyper_services::service::stateful_service::StatefulService;
-use hyper_services::service::stateless_service::StatelessService;
 
 use crate::services::external::ExternalService;
 use crate::services::internal::InternalService;
@@ -43,49 +43,42 @@ pub async fn start_and_run(params:InitializationParameters) {
         
         println!("Starting services.");
 
-        //Create event servers
-        let internal_service = {
+        let internal_handler = InternalService::new(&params);
+        let external_handler = ExternalService::new(&params.auth,&internal_handler);
 
-            let handler = InternalService::new(&params);
-            let service=StatefulService::create(handler);
-            
-            service.start(
-                IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                params.internal_port,
-                ConnectionProperties{
-                    with_upgrades:true,
-                    tls:None
-                }
-            )
-        };
+        let internal_service= StatefulService::create(internal_handler);
+        let external_service = StatefulService::create(external_handler);
 
-        let external_service = {
+        let internal_service_future = internal_service.start(
+            IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+            params.internal_port,
+            ConnectionProperties{
+                with_upgrades:true,
+                tls:None
+            }
+        );
 
-            let handler = ExternalService::new(&params.auth);
-            let service=StatefulService::create(handler);
-
-            match generate_simple_certificates(["*".to_string()])
-            {
-                Ok(keypair)=>{
-                    
-                    service.start(
-                        IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-                        params.external_port,
-                        ConnectionProperties{
-                            with_upgrades:false,
-                            tls:Some(keypair)
-                        }
-                    )
-                },
-                Err(e)=>{
-                    panic!("Couldn't create certificates. {:?}",e);
-                }
+        let external_service_future = match generate_simple_certificates(["*".to_string()])
+        {
+            Ok(keypair)=>{
+                
+                external_service.start(
+                    IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+                    params.external_port,
+                    ConnectionProperties{
+                        with_upgrades:false,
+                        tls:Some(keypair)
+                    }
+                )
+            },
+            Err(e)=>{
+                panic!("Couldn't create certificates. {:?}",e);
             }
         };
 
         println!("Services created.");
 
-        match tokio::try_join!(internal_service, external_service)
+        match tokio::try_join!(internal_service_future, external_service_future)
         {
             Ok(_) => println!("Services closed gracefully."),
             Err(e) => {

@@ -1,28 +1,24 @@
 
 use hyper::{body::Incoming, Method, Request, Response};
 use hyper_services::{
-    commons::HandlerResult, request_processing::{Auth, collect_incoming, get_request_body_as_string}, response_building::{bad_request, bytes_to_boxed_body}, service::{stateful_service::StatefulHandler, stateless_service::StatelessHandler}
+    commons::HandlerResult, request_processing::{Auth, collect_incoming}, response_building::{bad_request, bytes_to_boxed_body}, service::{stateful_service::StatefulHandler, stateless_service::StatelessHandler}
 };
-use serde::{Deserialize, Serialize};
+
+use crate::{commands::Command, services::internal::InternalService};
 
 #[derive(Clone)]
 pub struct ExternalService {
-    auth:Auth
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ChangeDashData {index:u32}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Command
-{
-    ChangeDash(ChangeDashData)
+    auth:Auth,
+    internal_handler:InternalService
 }
 
 impl ExternalService {
-    pub fn new(auth:&Auth) -> ExternalService
+    pub fn new(auth:&Auth,internal_handler:&InternalService) -> ExternalService
     {
-        ExternalService{auth:auth.clone()}
+        ExternalService{
+            auth:auth.clone(),
+            internal_handler:internal_handler.clone()
+        }
     }
 
     fn get_validator(&self)->impl Fn(Auth) -> bool{
@@ -34,7 +30,7 @@ impl ExternalService {
 }
 
 impl StatefulHandler for ExternalService {
-    async fn handle_request(self, request: Request<Incoming>) -> HandlerResult {
+    async fn handle_request(mut self, request: Request<Incoming>) -> HandlerResult {
         let (parts, incoming) = request.into_parts();
 
         match hyper_services::request_processing::check_basic_authentication(&parts,"/",self.get_validator()).await
@@ -62,7 +58,8 @@ impl StatefulHandler for ExternalService {
                                         }
                                     };
                                     
-                                    println!("Got command {:?}",deserialized);
+                                    println!("Got command {:?}, passing to internal service",deserialized);
+                                    self.internal_handler.push_command(deserialized).await;
                                 },
                                 key=>{
                                     println!("Unexpected key-value pair {}:{}",key,value);
@@ -87,25 +84,5 @@ impl StatefulHandler for ExternalService {
             hyper_services::commons::Handler::ImmediateReturn(response) => Ok(response),
             hyper_services::commons::Handler::Error(error) => Err(error),
         }
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    fn check_serialization(command: &Command) {
-        println!("Serialization test:");
-        let serialized = serde_json::to_string(command).expect("Should serialize.");
-        println!("   {}", serialized);
-        let deserialized: Command = serde_json::from_str(&serialized).expect("Should deserialize.");
-        println!("   {:?}", deserialized);
-    }
-
-    #[test]
-    fn serialization() {
-        check_serialization(&Command::ChangeDash(ChangeDashData { index: 3 }));
     }
 }

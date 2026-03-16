@@ -993,9 +993,11 @@ name = "shmashmexa-backend"
 version = "0.2.0"
 dependencies = [
  "form_urlencoded",
+ "futures-util",
  "hyper",
  "hyper-services",
  "hyper-tungstenite",
+ "hyper-util",
  "serde",
  "serde_json",
  "tokio",

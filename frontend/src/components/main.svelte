@@ -53,15 +53,25 @@
         icon_path: mdiClock
     };
 
+    type Command = {
+        
+    }
+
     function open_socket(){
         const socket_url = "ws:/"+location.host;
         console.debug("Opening websocket on");
         const socket = new WebSocket(socket_url);
 
+        //const test = () => {
+        //    console.debug("Test...");
+        //    socket.send(new Date().toString());
+        //    setTimeout(test,1000);
+        //}
+
         // Connection opened
         socket.addEventListener("open", (event) => {
             console.debug("Connection opened.");
-            socket.send("Hello Server!");
+            //test();
         });
 
         // Listen for messages
