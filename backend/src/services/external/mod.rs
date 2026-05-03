@@ -74,7 +74,10 @@ impl StatefulHandler for ExternalService {
                                                     match set_screen_state(state, &self.kiosk_uid)
                                                     {
                                                         Ok(_)=>(),
-                                                        Err(_)=>{return Ok(server_side_failure());}
+                                                        Err(e)=>{
+                                                            eprintln!("{:?}",e);
+                                                            return Ok(server_side_failure());
+                                                        }
                                                     }
                                                 },
                                             }

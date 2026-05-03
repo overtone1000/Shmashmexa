@@ -33,6 +33,7 @@ __Should be able to use this in backend to control screen with home assistant.__
 
 ```
 URL=https://127.0.0.1:8443 #For local debug mode
+URL=https://10.10.10.16:443 #For device
 USER=faux_show_test_user#Fill with external user name
 PASSWORD=faux_show_test_password#Fill with external user password
 
