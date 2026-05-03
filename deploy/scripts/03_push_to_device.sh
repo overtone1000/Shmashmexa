@@ -22,6 +22,7 @@ ssh $SERVER_IP "sudo ln -s $NIX_STORE_DIR $LINK_DIRECTORY/$LINK_NAME"
 ssh -t $SSH_DEST "sudo mkdir -p $ENVIRONMENT_DIRECTORY"
 ssh -t $SSH_DEST "echo EXTERNAL_USER=$EXTERNAL_USER | sudo tee $ENVIRONMENT_FILE"
 ssh -t $SSH_DEST "echo EXTERNAL_PASSWORD=$EXTERNAL_PASSWORD | sudo tee -a $ENVIRONMENT_FILE"
+ssh -t $SSH_DEST "echo KIOSK_USER_ID=$KIOSK_USER_ID | sudo tee -a $ENVIRONMENT_FILE"
 
 #Copy frontend to device
 ssh -t $SSH_DEST "sudo mkdir -p $WEB_DIRECTORY"

@@ -48,7 +48,8 @@
                 "env": {
                     "DEVELOPMENT_MODE":"true",
                     "EXTERNAL_USER":"faux_show_test_user",
-                    "EXTERNAL_PASSWORD":"faux_show_test_password"
+                    "EXTERNAL_PASSWORD":"faux_show_test_password",
+                    "KIOSK_USER_ID":"2000"
                 }
             }
         },

@@ -1,6 +1,6 @@
 pub(crate) mod services;
 pub(crate) mod commands;
-
+pub(crate) mod device;
 
 use std::
     net::{IpAddr, Ipv4Addr}
@@ -21,19 +21,21 @@ pub struct InitializationParameters
     config_static_directory:String,
     internal_port:u16,
     external_port:u16,
-    auth:Auth
+    auth:Auth,
+    kiosk_uid:u64
 }
 
 impl InitializationParameters
 {
-    pub fn new(internal_service_static_directory:&str, config_static_directory:&str, internal_port:u16, external_port:u16, auth:Auth)->InitializationParameters
+    pub fn new(internal_service_static_directory:&str, config_static_directory:&str, internal_port:u16, external_port:u16, auth:Auth, kiosk_uid:u64)->InitializationParameters
     {
         InitializationParameters { 
             internal_service_static_directory:internal_service_static_directory.to_string(),
             config_static_directory:config_static_directory.to_string(),
             internal_port, 
             external_port,
-            auth
+            auth,
+            kiosk_uid
         }
     }
 }
@@ -46,7 +48,7 @@ pub async fn start_and_run(params:InitializationParameters) {
         let (command_sender, command_receiver) = tokio::sync::mpsc::unbounded_channel::<commands::Command>();
 
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
-        let external_handler = ExternalService::new(&params.auth,command_sender);
+        let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,command_sender);
 
         let internal_service= StatefulService::create(internal_handler);
         let external_service = StatefulService::create(external_handler);

@@ -6,7 +6,8 @@ pub struct ChangeDashData {index:u32}
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
 pub enum Command
 {
-    ChangeDash(ChangeDashData)
+    ChangeDash(ChangeDashData),
+    SetScreenState(bool)
 }
 
 #[cfg(test)]
@@ -26,5 +27,6 @@ mod tests {
     #[test]
     fn serialization() {
         check_serialization(&Command::ChangeDash(ChangeDashData { index: 3 }));
+        check_serialization(&Command::SetScreenState(true));
     }
 }

@@ -28,3 +28,17 @@ wlr-randr --output HDMI-A-1 --off #Turns it off!
 wlr-randr --output HDMI-A-1 --on #Turns it on!
 ```
 __Should be able to use this in backend to control screen with home assistant.__
+
+### Testing Commands
+
+```
+URL=https://127.0.0.1:8443 #For local debug mode
+USER=faux_show_test_user#Fill with external user name
+PASSWORD=faux_show_test_password#Fill with external user password
+
+#Get messages with serialization test and add escapes
+MESSAGE={\"ChangeDash\":{\"index\":3}} #Test changedash
+MESSAGE={\"SetScreenState\":true} #Test screenstate
+
+curl --insecure --user "$USER:$PASSWORD" -X POST -H "Content-Type: application/json" -d "message=$MESSAGE" $URL
+```

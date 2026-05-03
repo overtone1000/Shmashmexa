@@ -1,24 +1,26 @@
 
 use hyper::{body::Incoming, Method, Request, Response};
 use hyper_services::{
-    commons::HandlerResult, request_processing::{Auth, collect_incoming}, response_building::{bad_request, bytes_to_boxed_body}, service::{stateful_service::StatefulHandler, stateless_service::StatelessHandler}
+    commons::HandlerResult, request_processing::{Auth, collect_incoming}, response_building::{bad_request, ok, server_side_failure}, service::{stateful_service::StatefulHandler, stateless_service::StatelessHandler}
 };
 use tokio::sync::mpsc::UnboundedSender;
 
-use crate::{commands::Command};
+use crate::{commands::Command, device::set_screen_state};
 
 #[derive(Clone)]
 pub struct ExternalService {
     auth:Auth,
+    kiosk_uid:u64,
     //internal_handler:InternalService
     command_sender:UnboundedSender<Command>
 }
 
 impl ExternalService {
-    pub fn new(auth:&Auth,command_sender:UnboundedSender<Command>) -> ExternalService
+    pub fn new(auth:&Auth,kiosk_uid:&u64,command_sender:UnboundedSender<Command>) -> ExternalService
     {
         ExternalService{
             auth:auth.clone(),
+            kiosk_uid:kiosk_uid.to_owned(),
             command_sender
         }
     }
@@ -32,7 +34,7 @@ impl ExternalService {
 }
 
 impl StatefulHandler for ExternalService {
-    async fn handle_request(mut self, request: Request<Incoming>) -> HandlerResult {
+    async fn handle_request(self, request: Request<Incoming>) -> HandlerResult {
         let (parts, incoming) = request.into_parts();
 
         match hyper_services::request_processing::check_basic_authentication(&parts,"/",self.get_validator()).await
@@ -52,23 +54,36 @@ impl StatefulHandler for ExternalService {
                             {
                                 std::borrow::Cow::Borrowed("message")=>{
                                     println!("Decoding command.");
-                                    let deserialized: Command = match serde_json::from_str(&value){
-                                        Ok(result)=>result,
+                                    match serde_json::from_str::<Command>(&value){
+                                        Ok(command)=>{
+                                            println!("Got command {:?}",command);
+                                            match command
+                                            {
+                                                Command::ChangeDash(_) => {
+                                                    println!("Passing directly to internal service without modification.");
+                                                    match self.command_sender.send(command)
+                                                    {
+                                                        Ok(_)=>(),
+                                                        Err(e)=>{
+                                                            eprintln!("Error during internal command processing. {:?}",e);
+                                                            return Ok(server_side_failure());
+                                                        }
+                                                    }
+                                                },
+                                                Command::SetScreenState(state) => {
+                                                    match set_screen_state(state, &self.kiosk_uid)
+                                                    {
+                                                        Ok(_)=>(),
+                                                        Err(_)=>{return Ok(server_side_failure());}
+                                                    }
+                                                },
+                                            }
+                                        },
                                         Err(e)=>{
                                             eprintln!("Couldn't deserialize command. {:?}",e);
                                             return Ok(bad_request());
                                         }
                                     };
-                                    
-                                    println!("Got command {:?}, passing to internal service",deserialized);
-                                    match self.command_sender.send(deserialized)
-                                    {
-                                        Ok(_)=>(),
-                                        Err(e)=>{
-                                            eprintln!("Error during internal command processing. {:?}",e);
-                                            return Ok(bad_request());
-                                        }
-                                    }
                                 },
                                 key=>{
                                     println!("Unexpected key-value pair {}:{}",key,value);
@@ -76,13 +91,13 @@ impl StatefulHandler for ExternalService {
                             }
                         }
                         
-                        Ok(Response::new(bytes_to_boxed_body("Ok")))
+                        Ok(ok())
                     },
                     Method::GET => {
 
                         println!("Received GET for {:?}",parts.uri);
 
-                        Ok(Response::new(bytes_to_boxed_body("Ok")))
+                        Ok(ok())
                     },
                     method=>{
                         eprintln!("Received unexpected method {:?}",method);

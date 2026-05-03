@@ -7,6 +7,8 @@ const DEV_MODE_ENV_KEY:&str="DEVELOPMENT_MODE";
 const EXTERNAL_USER_ENV_KEY:&str="EXTERNAL_USER";
 const EXTERNAL_PASSWORD_ENV_KEY:&str="EXTERNAL_PASSWORD";
 
+const KIOSK_USER_ID_ENV_KEY:&str="KIOSK_USER_ID";
+
 const PROD_INTERNAL_SERVICE_DIR:&str="/var/www/internal";
 const PROD_CONFIG_DIR:&str="/var/www/config";
 const PROD_INTERNAL_PORT:u16=30125;
@@ -52,6 +54,25 @@ async fn main() {
         }
     };
 
+    let kiosk_uid:u64 = match std::env::var(KIOSK_USER_ID_ENV_KEY)
+    {
+        Ok(val)=>{
+            match val.parse()
+            {
+                Ok(val)=>val,
+                Err(e)=>{
+                    eprintln!("{:?}",e);
+                    eprintln!("kiosk uid is not a valid unsigned integer.");
+                    return;
+                }
+            }
+        },
+        Err(_)=>{
+            eprintln!("Must provide kiosk user id as an environment variable.");
+            return;
+        }
+    };
+
     let auth:Auth=Auth{
         user,
         password
@@ -61,11 +82,11 @@ async fn main() {
     {
         true=>{
             println!("Running in development mode.");
-            InitializationParameters::new(DEV_INTERNAL_SERVICE_DIR,DEV_CONFIG_DIR,DEV_INTERNAL_PORT,DEV_EXTERNAL_PORT,auth)
+            InitializationParameters::new(DEV_INTERNAL_SERVICE_DIR,DEV_CONFIG_DIR,DEV_INTERNAL_PORT,DEV_EXTERNAL_PORT,auth,kiosk_uid)
         },
         false=>{
             println!("Running in production mode.");
-            InitializationParameters::new(PROD_INTERNAL_SERVICE_DIR,PROD_CONFIG_DIR,PROD_INTERNAL_PORT,PROD_EXTERNAL_PORT,auth)
+            InitializationParameters::new(PROD_INTERNAL_SERVICE_DIR,PROD_CONFIG_DIR,PROD_INTERNAL_PORT,PROD_EXTERNAL_PORT,auth,kiosk_uid)
         }
     };
 
