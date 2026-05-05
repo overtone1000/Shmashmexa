@@ -27,7 +27,24 @@ wlr-randr --help #Should be sudo? No! Should be run as kiosk!
 wlr-randr --output HDMI-A-1 --off #Turns it off!
 wlr-randr --output HDMI-A-1 --on #Turns it on!
 ```
-__Should be able to use this in backend to control screen with home assistant.__
+Implemented in the `device` section of the library
+
+### Photoprism API
+
+Docs are here: https://docs.photoprism.dev/
+
+Generate a token in the running container via cli: `photoprism auth add --name faux_show --scope read`
+
+```
+USER=admin
+PHOTOPRISM_KEY=#Fill with webdav scoped photoprism key
+URL=https://photos.overdesigned.org/api/v1
+
+curl -H "Authorization: Bearer $PHOTOPRISM_KEY" -H "Content-Type: application/json" $URL/photos?count=2 #This works with  permissive app password
+
+curl -X GET -H "X-Auth-Token: $PHOTOPRISM_KEY" $URL/photos?count=5 -H "accept: application.json"
+```
+
 
 ### Testing Commands
 
