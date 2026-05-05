@@ -33,16 +33,21 @@ Implemented in the `device` section of the library
 
 Docs are here: https://docs.photoprism.dev/
 
-Generate a token in the running container via cli: `photoprism auth add --name faux_show --scope read`
+Tried `photoprism auth` but permission constantly denied.
 
 ```
-USER=admin
-PHOTOPRISM_KEY=#Fill with webdav scoped photoprism key
+PHOTOPRISM_KEY=#Fill with photoprism key
+SLIDESHOW_ALBUM_UID=#Fill with UID from photoprism for desired album
 URL=https://photos.overdesigned.org/api/v1
+EXAMPLE_PHOTO_UID=#Get an example photo and put uid here for testing
+EXAMPLE_FILE_UID=#Get an exampl file uid
 
-curl -H "Authorization: Bearer $PHOTOPRISM_KEY" -H "Content-Type: application/json" $URL/photos?count=2 #This works with  permissive app password
-
-curl -X GET -H "X-Auth-Token: $PHOTOPRISM_KEY" $URL/photos?count=5 -H "accept: application.json"
+curl -X "GET" -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/albums?count=5 #Works, can browse albums
+curl -X "GET" -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/albums/$SLIDESHOW_ALBUM_UID #Get the slideshow album details
+curl -X "GET" -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/photos?count=999&merged=true&public=true&s=$SLIDESHOW_ALBUM_UID #Works!
+curl -X "GET" -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/photos/$EXAMPLE_PHOTO_UID #Works
+curl -X "GET" --output test_image -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/photos/$EXAMPLE_PHOTO_UID/dl -H "accept: application/octet-stream" #Works, but just a short html with svg even if using a known image UID from web interface.
+curl -X "GET" --output test_image -H "Authorization: Bearer $PHOTOPRISM_KEY" $URL/dl/$EXAMPLE_FILE_UID -H "accept: application/octet-stream" #Works, but just a short html with svg even if using a known image UID from web interface.
 ```
 
 
