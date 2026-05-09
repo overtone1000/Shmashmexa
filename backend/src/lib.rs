@@ -11,7 +11,9 @@ use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
 use hyper_services::service::stateful_service::StatefulService;
 
-use crate::services::external::ExternalService;
+use crate::services::external::external_core::ExternalCore;
+use crate::services::external::mqtt_client::MQTTClient;
+use crate::services::external::rest_service::ExternalService;
 use crate::services::internal::InternalService;
 
 #[derive(Debug)]
@@ -45,10 +47,15 @@ pub async fn start_and_run(params:InitializationParameters) {
         
         println!("Starting services.");
 
+        //Command receiver doesn't implement clone so can't pass it in to a service.
         let (command_sender, command_receiver) = tokio::sync::mpsc::unbounded_channel::<commands::Command>();
 
+        let external_core=ExternalCore::new(command_sender);
+
+        let mqtt_client:MQTTClient = MQTTClient::new();
+
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
-        let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,command_sender);
+        let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,external_core);
 
         let internal_service= StatefulService::create(internal_handler);
         let external_service = StatefulService::create(external_handler);
@@ -72,7 +79,7 @@ pub async fn start_and_run(params:InitializationParameters) {
                     ConnectionProperties{
                         with_upgrades:false,
                         tls:Some(keypair)
-                    }
+                    }                    
                 )
             },
             Err(e)=>{
