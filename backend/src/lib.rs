@@ -87,9 +87,11 @@ pub async fn start_and_run(params:InitializationParameters) {
             }
         };
 
+        let mqtt_client_future = mqtt_client.run();
+
         println!("Services created.");
 
-        match tokio::try_join!(internal_service_future, external_service_future)
+        match tokio::try_join!(internal_service_future, external_service_future, mqtt_client_future)
         {
             Ok(_) => println!("Services closed gracefully."),
             Err(e) => {
