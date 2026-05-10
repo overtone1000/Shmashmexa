@@ -6,13 +6,13 @@ use std::
     net::{IpAddr, Ipv4Addr}
 ;
 
+use has_mqtt::mqtt_client::HASMQTTClient;
 use hyper_services::request_processing::Auth;
 use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
 use hyper_services::service::stateful_service::StatefulService;
 
 use crate::services::external::external_core::ExternalCore;
-use crate::services::external::mqtt_client::MQTTClient;
 use crate::services::external::rest_service::ExternalService;
 use crate::services::internal::InternalService;
 
@@ -52,7 +52,7 @@ pub async fn start_and_run(params:InitializationParameters) {
 
         let external_core=ExternalCore::new(command_sender);
 
-        let mqtt_client:MQTTClient = MQTTClient::new();
+        let mqtt_client:HASMQTTClient = HASMQTTClient::new();
 
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
         let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,external_core);

@@ -252,6 +252,7 @@ version = "0.3.0"
 dependencies = [
  "form_urlencoded",
  "futures-util",
+ "has-mqtt",
  "hyper",
  "hyper-services",
  "hyper-tungstenite",
@@ -409,6 +410,16 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "has-mqtt"
+version = "0.1.0"
+dependencies = [
+ "rumqttc",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
