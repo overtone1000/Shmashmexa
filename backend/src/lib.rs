@@ -2,11 +2,14 @@ pub(crate) mod services;
 pub(crate) mod commands;
 pub(crate) mod device;
 
+use std::collections::HashMap;
 use std::
     net::{IpAddr, Ipv4Addr}
 ;
 
-use has_mqtt::mqtt_client::HASMQTTClient;
+use has_mqtt::component::HomeAssistantDeviceComponent;
+use has_mqtt::device::HomeAssistantDeviceConfiguration;
+use has_mqtt::mqtt_client::{DEFAULT_DISCOVERY_PREFIX, HASMQTTClient};
 use hyper_services::request_processing::Auth;
 use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
@@ -52,7 +55,12 @@ pub async fn start_and_run(params:InitializationParameters) {
 
         let external_core=ExternalCore::new(command_sender);
 
-        let mqtt_client:HASMQTTClient = HASMQTTClient::new();
+        let mqtt_client:HASMQTTClient = HASMQTTClient::new(
+            "faux_show_client",
+            "10.10.10.10",
+            1883,
+            DEFAULT_DISCOVERY_PREFIX
+        );
 
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
         let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,external_core);
@@ -87,7 +95,27 @@ pub async fn start_and_run(params:InitializationParameters) {
             }
         };
 
-        let mqtt_client_future = mqtt_client.run();
+        let mut cmps:HashMap<String,HomeAssistantDeviceComponent>=HashMap::new();
+        
+        cmps.insert(
+            "monitor".to_string(),
+            HomeAssistantDeviceComponent::new_switch(
+                "faux_show_monitor"
+            )
+        );
+
+        let device=HomeAssistantDeviceConfiguration::new(
+            "faux_show".to_string(),
+            "Faux Show".to_string(),
+            "Tyler Moore".to_string(),
+            "0.1.0".to_string(),
+            cmps
+        );
+
+        let mqtt_client_future = mqtt_client.run(
+            "faux_show",
+            device
+        );
 
         println!("Services created.");
 
