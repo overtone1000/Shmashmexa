@@ -1,10 +1,10 @@
 use std::error::Error;
 
-pub(crate) fn set_screen_state(desired_state:bool, kiosk_uid:&u64)->Result<(),Box<dyn Error>>
+pub(crate) fn set_screen_state(screen_on:bool, kiosk_uid:&u64)->Result<(),Box<dyn Error>>
 {
     use std::process::Command;
 
-    let arg = match desired_state
+    let arg = match screen_on
     {
         true=>"--on",
         false=>"--off"

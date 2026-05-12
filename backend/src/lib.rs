@@ -10,6 +10,7 @@ use std::
 use has_mqtt::component::HomeAssistantDeviceComponent;
 use has_mqtt::device::HomeAssistantDeviceConfiguration;
 use has_mqtt::mqtt_client::{DEFAULT_DISCOVERY_PREFIX, HASMQTTClient};
+use has_mqtt::platform::switch::SwitchState;
 use hyper_services::request_processing::Auth;
 use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
@@ -55,13 +56,6 @@ pub async fn start_and_run(params:InitializationParameters) {
 
         let external_core=ExternalCore::new(command_sender);
 
-        let mqtt_client:HASMQTTClient = HASMQTTClient::new(
-            "faux_show_client",
-            "10.10.10.10",
-            1883,
-            DEFAULT_DISCOVERY_PREFIX
-        );
-
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
         let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,external_core);
 
@@ -96,11 +90,24 @@ pub async fn start_and_run(params:InitializationParameters) {
         };
 
         let mut cmps:HashMap<String,HomeAssistantDeviceComponent>=HashMap::new();
+
+        let handle_state_change =move |state:SwitchState|->SwitchState
+        {
+            match device::set_screen_state(state.as_bool(),&params.kiosk_uid.clone())
+            {
+                Ok(_)=>state,
+                Err(e)=>{
+                    eprintln!("Error setting screen state. {:?}",e);  
+                    !state
+                }
+            }
+        };
         
         cmps.insert(
             "monitor".to_string(),
             HomeAssistantDeviceComponent::new_switch(
-                "faux_show_monitor"
+                "faux_show_monitor",
+                Box::new(handle_state_change)
             )
         );
 
@@ -112,10 +119,17 @@ pub async fn start_and_run(params:InitializationParameters) {
             cmps
         );
 
-        let mqtt_client_future = mqtt_client.run(
+
+        let mqtt_client:HASMQTTClient = HASMQTTClient::start(
+            "faux_show_client",
+            "10.10.10.10",
+            1883,
+            DEFAULT_DISCOVERY_PREFIX,
             "faux_show",
             device
-        );
+        ).await;
+
+        let mqtt_client_future = mqtt_client.run();
 
         println!("Services created.");
 
