@@ -1,7 +1,7 @@
 ## Updating
 
-In this directory, run:
-`sudo nixos-rebuild switch --ask-sudo-password --no-reexec --flake ./#rpi5 --sudo --target-host $USER$@$DEVICE_IP`
+In the repo root, run:
+`sudo nixos-rebuild switch --ask-sudo-password --no-reexec --flake ./operating_system/config#rpi5 --sudo --target-host $USER$@$DEVICE_IP`
 
 May need
 `sudo nix --extra-experimental-features 'nix-command flakes' flake update` to force some things to update

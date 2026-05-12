@@ -31,6 +31,9 @@ let
   #SUBSYSTEM=="input", ATTRS{name}=="wch.cn USB2IIC_CTP_CONTROL", ATTRS{phys}=="usb-0000:01:00.0-1.1/input0", ENV{LIBINPUT_IGNORE_DEVICE}="1"
 in
 {
+
+  services.automatic-timezoned.enable=true;
+  
   users.users = {
 		kiosk = {
 			isNormalUser = true;

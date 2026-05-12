@@ -7,6 +7,7 @@ let
     ];
 in
 {
+
   users.users.root = {
     openssh.authorizedKeys.keys  = universal_keys;
   };
