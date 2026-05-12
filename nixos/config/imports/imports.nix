@@ -14,7 +14,7 @@ in
 
 	imports =
 	[ 
-		./kiosk/secrets.nix
+		./kiosk/users.nix
 		./kiosk/faux-show-backend.nix
 		
 		##Import explicitly to avoid leaking options/arguments. Without the import, this builds firefox.

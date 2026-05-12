@@ -11,7 +11,7 @@ in
     openssh.authorizedKeys.keys  = universal_keys;
   };
   
-  users.users.dev_account = {
+  users.users.tyler = {
     openssh.authorizedKeys.keys  = universal_keys;
   };
 
