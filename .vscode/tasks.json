@@ -44,7 +44,7 @@
                 "$rustc"
             ],
             "options": {
-                "cwd":"backend",
+                "cwd":"software/backend",
                 "env": {
                     "DEVELOPMENT_MODE":"true",
                     "EXTERNAL_USER":"faux_show_test_user",

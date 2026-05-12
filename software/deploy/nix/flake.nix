@@ -28,7 +28,7 @@
         # Replace with the system you want to build for
         crossSystem = "aarch64-linux";
 
-        main_source_dir=./../..;
+        main_source_dir=./../../..;
         #trm_rust_libs_source_dir=./../../../trm-rust-libs; #Uses two modules from this
 
         pkgs = import nixpkgs {

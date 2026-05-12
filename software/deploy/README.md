@@ -31,9 +31,9 @@ nix.settings.trusted-public-keys = [
 Deploy from the repo root with:
 
 ```
-bash ./deploy/scripts/01_build_backend.sh
-bash ./deploy/scripts/02_build_frontend.sh
-bash ./deploy/scripts/03_push_to_device.sh
+bash ./software/deploy/scripts/01_build_backend.sh
+bash ./software/deploy/scripts/02_build_frontend.sh
+bash ./software/deploy/scripts/03_push_to_device.sh
 ```
 
 ### Restart after backend update

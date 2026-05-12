@@ -3,4 +3,4 @@
 set -e
 
 #Build frontend
-npm run-script build --prefix ./frontend
+npm run-script build --prefix ./software/frontend

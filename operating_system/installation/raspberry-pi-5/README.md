@@ -1,6 +1,6 @@
-## Pi 5
+# Pi 5
 
-### Installation
+## Procedure
 
 https://github.com/nvmd/nixos-raspberrypi
 
@@ -14,7 +14,7 @@ Although emulated native compilation is slow, there will hopefully be enough cac
 **Previously did this with emulation on system in misc.nix (boot.binfmt.emulatedSystems = [ "aarch64-linux" ];) but this is pretty slow for builds. Can do with cross-compile instead? See rpi5_kiosk. Can even mix them by only adding cross settings to the specific import.**
 **Using the cross compiler compiles _everthing_ because cached packages aren't available. Pretty slow.**
 
-#### Installer build
+### Installer build
 ```
 nixpkgs.hostPlatform = "aarch64-linux";
 nixpkgs.buildPlatform = "x86_64-linux";
@@ -31,7 +31,7 @@ sudo umount $DEVICE*
 sudo nix-shell -p zstd --run "zstdcat $IMAGE | dd of=$DEVICE bs=4M status=progress conv=fsync"
 ```
 
-#### Installation
+### Installation
 
 Use nixos-anywhere like described in the nixos-raspberrypi README.
 
@@ -52,7 +52,7 @@ nix-shell -p nixos-anywhere
 nixos-anywhere --flake /etc/nixos/trm_nixos/devices/rpi5_kiosk#rpi5 root@$DEVICE_IP
 ```
 
-### Updating Config
+## First Config Update
 
 - Will need to update using a modified version of the flake. Initial update will need to be with root, but user configuration changes will then apply.
 
