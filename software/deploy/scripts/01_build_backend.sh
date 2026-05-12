@@ -4,5 +4,8 @@ set -e
 
 #Build and sign backend
 cd ./software/deploy/nix
+echo Building
 nix build --extra-experimental-features 'nix-command flakes' .#
+echo Signing
 nix store sign --extra-experimental-features 'nix-command flakes'  --recursive --key-file ./nix-store-binary-cache-key-secret $NIX_STORE_DIR
+echo Done
