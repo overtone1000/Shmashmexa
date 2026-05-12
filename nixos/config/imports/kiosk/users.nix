@@ -2,7 +2,8 @@
 { config, pkgs, ... }:
 let
     universal_keys = [ 
-        #Put ssh keys for root and dev account here
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILhHNqrrHT1SVQLrw0h3jxbB+eUG1Bskxpho1PAP7P1j tyler@nixos"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILtzYVbugD5KBJVcKlI2ShK4umWf4UzxhywXEF/qImN6 tyler@nixos"
     ];
 in
 {
@@ -14,11 +15,11 @@ in
     openssh.authorizedKeys.keys  = universal_keys;
   };
 
-  nix.settings.trusted-users = [ "tydev_accountler" ];
+  nix.settings.trusted-users = [ "tyler" ];
 	users.users = {
-		dev_account = {
+		tyler = {
 			isNormalUser = true;
-			description = "Developer";
+			description = "Tyler";
 			extraGroups = [ 
 				"networkmanager"
 				"wheel" #root privileges
