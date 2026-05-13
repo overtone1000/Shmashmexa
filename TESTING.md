@@ -1,8 +1,8 @@
 
 ### Trying to sleep screen
 ```
-XDG_RUNTIME_DIR=/run/user/$(id -u) #Should be kiosk user doing this? Yes!! ID is 2000
-WAYLAND_DISPLAY=wayland-0 #Which display? Seems this works.
+export XDG_RUNTIME_DIR=/run/user/$(id -u) #Should be kiosk user doing this? Yes!! ID is 2000
+export WAYLAND_DISPLAY=wayland-0 #Which display? Seems this works.
 wlr-randr --help #Should be sudo? No! Should be run as kiosk!
 wlr-randr --output HDMI-A-1 --off #Turns it off!
 wlr-randr --output HDMI-A-1 --on #Turns it on!
