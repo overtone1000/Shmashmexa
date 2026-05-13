@@ -99,17 +99,47 @@ in
 
   environment.systemPackages = with pkgs; [ 
     cage
-    firefox
+    #firefox #no h.265 support, #use module (below) instead to allow extra options
+    #chromium #use module (below) instead to allow extra options
     wlr-randr
-  ]; 
+  ];
+
+  #programs.chromium = {
+  #  enable = true;
+  #  #package = pkgs.chromium;
+  #  
+  #  extraOpts = {
+  #    "BrowserSignin" = 0;
+  #    "SyncDisabled" = true;
+  #    "PasswordManagerEnabled" = false;
+  #    "SpellcheckEnabled" = false;
+  #  };
+  #};
+
+  programs.firefox = {
+    enable = true;
+    package = pkgs.firefox;
+    preferences = {
+      # Trying a smattering of preferences to get h.265 HEVC streams working
+      "media.hevc.enabled" = true;
+      #"media.ffmpeg.vaapi.enabled" = true;
+      #"media.rdd-vpx.enabled" = false;
+      #"media.rdd-process.enabled" = true;
+      #"widget.wayland-dmabuf-vaapi.enabled" = true;
+      #"gfx.webrender.enabled" = true;
+    };
+  };
+
+  #programs.chrome = {
+  #  enable = true;
+  #};
 
   services.cage = {
     enable=true;
     program="${pkgs.firefox}/bin/firefox --kiosk --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
-    #extraArguments=[
-    #  " --kiosk"
-    #  "http://10.10.10.10:8123"
-    #];
+    #program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
+    #program="${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --no-first-run --no-default-browser-check http://127.0.0.1:30125";
+    #program="${pkgs.google-chrome}/bin/google-chrome --kiosk --noerrdialogs --no-first-run --no-default-browser-check --incognito --disable-infobars http://127.0.0.1:30125";
     user="kiosk";
   };
 

@@ -219,6 +219,11 @@
               raspberry-pi-5.page-size-16k
               raspberry-pi-5.display-vc4
             ];
+
+            environment.systemPackages = with pkgs; [ 
+              ffmpeg #trying to get hardware decoding for h.265
+              vdpauinfo
+            ];
           })
           
           # Disk configuration
