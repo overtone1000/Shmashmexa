@@ -10,7 +10,7 @@ use std::
 use has_mqtt::component::HomeAssistantDeviceComponent;
 use has_mqtt::device::HomeAssistantDeviceConfiguration;
 use has_mqtt::mqtt_client::{DEFAULT_DISCOVERY_PREFIX, HASMQTTClient};
-use has_mqtt::platform::switch::SwitchState;
+use has_mqtt::platform::switch::state::SwitchState;
 use hyper_services::request_processing::Auth;
 use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
@@ -107,9 +107,12 @@ pub async fn start_and_run(params:InitializationParameters) {
             "monitor".to_string(),
             HomeAssistantDeviceComponent::new_switch(
                 "faux_show_monitor",
+                "Faux Show Monitor",
                 Box::new(handle_state_change)
             )
         );
+
+        //Insert text component!!
 
         let device=HomeAssistantDeviceConfiguration::new(
             "faux_show".to_string(),
