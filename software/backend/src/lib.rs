@@ -1,6 +1,7 @@
 pub(crate) mod services;
 pub(crate) mod commands;
 pub(crate) mod device;
+pub(crate) mod mqtt;
 
 use std::collections::HashMap;
 use std::
@@ -89,49 +90,7 @@ pub async fn start_and_run(params:InitializationParameters) {
             }
         };
 
-        let mut cmps:HashMap<String,HomeAssistantDeviceComponent>=HashMap::new();
-
-        let handle_state_change =move |state:SwitchState|->SwitchState
-        {
-            match device::set_screen_state(state.as_bool(),&params.kiosk_uid.clone())
-            {
-                Ok(_)=>state,
-                Err(e)=>{
-                    eprintln!("Error setting screen state. {:?}",e);  
-                    !state
-                }
-            }
-        };
-        
-        cmps.insert(
-            "monitor".to_string(),
-            HomeAssistantDeviceComponent::new_switch(
-                "faux_show_monitor",
-                "Faux Show Monitor",
-                Box::new(handle_state_change)
-            )
-        );
-
-        //Insert text component!!
-
-        let device=HomeAssistantDeviceConfiguration::new(
-            "faux_show".to_string(),
-            "Faux Show".to_string(),
-            "Tyler Moore".to_string(),
-            "0.1.0".to_string(),
-            cmps
-        );
-
-
-        let mqtt_client:HASMQTTClient = HASMQTTClient::start(
-            "faux_show_client",
-            "10.10.10.10",
-            1883,
-            DEFAULT_DISCOVERY_PREFIX,
-            "faux_show",
-            device
-        ).await;
-
+        let mqtt_client=mqtt::get_has_client(params.kiosk_uid.clone()).await;
         let mqtt_client_future = mqtt_client.run();
 
         println!("Services created.");
