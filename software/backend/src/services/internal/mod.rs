@@ -191,7 +191,6 @@ impl InternalService
 
 impl StatefulHandler for InternalService {
     async fn handle_request(self:Self, request: Request<Incoming>) -> HandlerResult {
-
         match hyper_tungstenite::is_upgrade_request(&request) {
             true=>{
                 let (response, websocket) = hyper_tungstenite::upgrade(request, None)?;

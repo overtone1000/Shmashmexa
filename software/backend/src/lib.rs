@@ -60,7 +60,7 @@ pub async fn start_and_run(params:InitializationParameters) {
         let internal_handler = InternalService::new(&params, std::sync::Arc::new(tokio::sync::Mutex::new(command_receiver)));
         let external_handler = ExternalService::new(&params.auth,&params.kiosk_uid,external_core);
 
-        let internal_service= StatefulService::create(internal_handler);
+        let internal_service= StatefulService::create(internal_handler.clone());
         let external_service = StatefulService::create(external_handler);
 
         let internal_service_future = internal_service.start(
@@ -90,7 +90,7 @@ pub async fn start_and_run(params:InitializationParameters) {
             }
         };
 
-        let mqtt_client=mqtt::get_has_client(params.kiosk_uid.clone()).await;
+        let mqtt_client=mqtt::get_has_client(params.kiosk_uid.clone(), internal_handler).await;
         let mqtt_client_future = mqtt_client.run();
 
         println!("Services created.");
