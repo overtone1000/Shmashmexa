@@ -1,6 +1,7 @@
 <script lang="ts">
     import { mdiClock } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
+    import { mdiRobot } from '@mdi/js';
     import IconTab, { type TabProps } from './icon_tab.svelte';
 	import { onMount } from 'svelte';
 	import Time from './time.svelte';
@@ -15,7 +16,7 @@
     };
 
     type IFrameMeta = {
-        url:string,
+        url:string|null,
         title:string
     };
 
@@ -51,19 +52,39 @@
             }
         },
         icon_label: "clock",
-        icon_path: mdiClock
+        icon_path: mdiClock,
+        disabled: true //Not ready yet
     };
+
+    let auto_tab_url:string|null = $state(null);
+    let auto_tab_props = $derived(
+        {
+            action: () => {
+                main={
+                    field: MainField.iframe,
+                    iframe_meta:{
+                        url: auto_tab_url,
+                        title: "Automatic Tab"
+                    }
+                }
+            },
+            icon_label: "auto",
+            icon_path: mdiRobot,
+            disabled: auto_tab_url===null
+        }
+    );
 
     function handle_server_command(command:Command)
     {
         console.debug("Handling command.");
-        if(command.ChangeDash)
+        if(command.ChangeDashUrl)
         {
-            console.debug("Changing dash to " + command.ChangeDash.index);
-            if(tabs !== undefined && tabs[command.ChangeDash.index] !== undefined)
-            {
-                tabs[command.ChangeDash.index].action();
-            }
+            console.debug("Changing URL to " + command.ChangeDashUrl);
+            auto_tab_url=command.ChangeDashUrl;
+            //if(tabs !== undefined && tabs[command.ChangeDash.index] !== undefined)
+            //{
+            //    tabs[command.ChangeDash.index].action();
+            //}
         }
     }
 
@@ -160,6 +181,7 @@
             <IconTab --right_margin="4px" props={tab}/>
         {/each}
         <IconTab props={clock}/>
+        <IconTab props={auto_tab_props}/>
         <div class="spacer"></div>
         <Time/>
         <div class="spacer"></div>

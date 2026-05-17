@@ -4,7 +4,8 @@
     export type TabProps = {
         action:()=>void,
         icon_path:string,
-        icon_label:string
+        icon_label:string,
+        disabled?:boolean
     };
 
     type TabPropsCont = {props:TabProps};
@@ -12,11 +13,12 @@
 </script>
 
 <div class="tab">
-<IconButton
-    path={propscont.props.icon_path}
-    label={propscont.props.icon_label}
-    action={propscont.props.action}
-/>
+    <IconButton
+        path={propscont.props.icon_path}
+        label={propscont.props.icon_label}
+        action={propscont.props.action}
+        disabled={propscont.props.disabled}
+    />
 </div>
 
 <style>

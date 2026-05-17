@@ -35,7 +35,7 @@ impl ExternalService {
     {
         match command
         {
-            Command::ChangeDash(_) => {
+            Command::ChangeDashUrl(_) => {
                 println!("Passing directly to internal service without modification.");
                 match self.external_core.command_sender.send(command)
                 {

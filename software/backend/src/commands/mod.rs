@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
-pub struct ChangeDashData {index:u32}
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
+pub struct ChangeDashData {url:String}
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, Copy)]
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum Command
 {
-    ChangeDash(ChangeDashData),
+    ChangeDashUrl(String),
     SetScreenState(bool)
 }
 
@@ -26,7 +27,7 @@ mod tests {
 
     #[test]
     fn serialization() {
-        check_serialization(&Command::ChangeDash(ChangeDashData { index: 3 }));
+        check_serialization(&Command::ChangeDashUrl( "https://www.example.com".to_string()));
         check_serialization(&Command::SetScreenState(true));
     }
 }

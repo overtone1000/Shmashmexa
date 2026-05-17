@@ -49,6 +49,8 @@
                     "DEVELOPMENT_MODE":"true",
                     "EXTERNAL_USER":"faux_show_test_user",
                     "EXTERNAL_PASSWORD":"faux_show_test_password",
+                    "DEVICE_NAME":"Test Faux Show",
+                    "DEVICE_ID":"test_faux_show",
                     "KIOSK_USER_ID":"2000"
                 }
             }

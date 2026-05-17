@@ -1,7 +1,7 @@
 pub(crate) mod services;
 pub(crate) mod commands;
 pub(crate) mod device;
-pub(crate) mod mqtt;
+pub mod mqtt;
 
 use std::collections::HashMap;
 use std::
@@ -17,6 +17,7 @@ use hyper_services::service::certificates::generate_simple_certificates;
 use hyper_services::service::spawn::ConnectionProperties;
 use hyper_services::service::stateful_service::StatefulService;
 
+use crate::mqtt::MQTTConfiguration;
 use crate::services::external::external_core::ExternalCore;
 use crate::services::external::rest_service::ExternalService;
 use crate::services::internal::InternalService;
@@ -29,12 +30,13 @@ pub struct InitializationParameters
     internal_port:u16,
     external_port:u16,
     auth:Auth,
-    kiosk_uid:u64
+    kiosk_uid:u64,
+    mqtt_config:MQTTConfiguration
 }
 
 impl InitializationParameters
 {
-    pub fn new(internal_service_static_directory:&str, config_static_directory:&str, internal_port:u16, external_port:u16, auth:Auth, kiosk_uid:u64)->InitializationParameters
+    pub fn new(internal_service_static_directory:&str, config_static_directory:&str, internal_port:u16, external_port:u16, auth:Auth, kiosk_uid:u64, mqtt_config:MQTTConfiguration)->InitializationParameters
     {
         InitializationParameters { 
             internal_service_static_directory:internal_service_static_directory.to_string(),
@@ -42,7 +44,8 @@ impl InitializationParameters
             internal_port, 
             external_port,
             auth,
-            kiosk_uid
+            kiosk_uid,
+            mqtt_config
         }
     }
 }
@@ -90,7 +93,8 @@ pub async fn start_and_run(params:InitializationParameters) {
             }
         };
 
-        let mqtt_client=mqtt::get_has_client(params.kiosk_uid.clone(), external_core).await;
+
+        let mqtt_client=mqtt::get_has_client(external_core, &params.mqtt_config, params.kiosk_uid).await;
         let mqtt_client_future = mqtt_client.run();
 
         println!("Services created.");

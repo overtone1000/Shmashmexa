@@ -9,6 +9,9 @@ const EXTERNAL_PASSWORD_ENV_KEY:&str="EXTERNAL_PASSWORD";
 
 const KIOSK_USER_ID_ENV_KEY:&str="KIOSK_USER_ID";
 
+const DEVICE_MQTT_NAME_ENV_KEY:&str="DEVICE_NAME";
+const DEVICE_MQTT_ID_ENV_KEY:&str="DEVICE_ID";
+
 const PROD_INTERNAL_SERVICE_DIR:&str="/var/www/internal";
 const PROD_CONFIG_DIR:&str="/var/www/config";
 const PROD_INTERNAL_PORT:u16=30125;
@@ -29,6 +32,28 @@ async fn main() {
         },
         Err(_)=>{
             false
+        }
+    };
+
+    let device_mqtt_name:String = match std::env::var(DEVICE_MQTT_NAME_ENV_KEY)
+    {
+        Ok(val)=>{
+            val
+        },
+        Err(_)=>{
+            eprintln!("Must provide mqtt device name as an environment variable.");
+            return;
+        }
+    };
+
+    let device_mqtt_id:String = match std::env::var(DEVICE_MQTT_ID_ENV_KEY)
+    {
+        Ok(val)=>{
+            val
+        },
+        Err(_)=>{
+            eprintln!("Must provide mqtt device id as an environment variable.");
+            return;
         }
     };
 
@@ -78,15 +103,29 @@ async fn main() {
         password
     };
 
+
+    let mqtt_config = faux_show_backend::mqtt::MQTTConfiguration
+    {
+        id: device_mqtt_id.clone(),
+        name: device_mqtt_name,
+        origin_name: "Tyler Moore".to_string(),
+        origin_sw: "0.1.0".to_string(),
+        client_id: device_mqtt_id+"_client",
+        server_url: "10.10.10.10".to_string(),
+        server_port: 1883,
+        object_id: "faux_show".to_string(),
+        discovery_prefix: has_mqtt::mqtt_client::DEFAULT_DISCOVERY_PREFIX.to_string(),
+    };
+
     let params:InitializationParameters=match dev_mode
     {
         true=>{
             println!("Running in development mode.");
-            InitializationParameters::new(DEV_INTERNAL_SERVICE_DIR,DEV_CONFIG_DIR,DEV_INTERNAL_PORT,DEV_EXTERNAL_PORT,auth,kiosk_uid)
+            InitializationParameters::new(DEV_INTERNAL_SERVICE_DIR,DEV_CONFIG_DIR,DEV_INTERNAL_PORT,DEV_EXTERNAL_PORT,auth,kiosk_uid,mqtt_config)
         },
         false=>{
             println!("Running in production mode.");
-            InitializationParameters::new(PROD_INTERNAL_SERVICE_DIR,PROD_CONFIG_DIR,PROD_INTERNAL_PORT,PROD_EXTERNAL_PORT,auth,kiosk_uid)
+            InitializationParameters::new(PROD_INTERNAL_SERVICE_DIR,PROD_CONFIG_DIR,PROD_INTERNAL_PORT,PROD_EXTERNAL_PORT,auth,kiosk_uid,mqtt_config)
         }
     };
 

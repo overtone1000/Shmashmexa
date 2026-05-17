@@ -13,6 +13,8 @@ ENVIRONMENT_DIRECTORY=/root/faux-show-environment
 ENVIRONMENT_FILE=$ENVIRONMENT_DIRECTORY/.env
 WEB_DIRECTORY=/var/www/internal
 NIX_STORE_DIR=$(readlink -f ./software/deploy/nix/result)
+DEVICE_NAME="Faux Show"
+DEVICE_ID="faux_show"
 
 #Copy backend to device and set symlink
 echo Copying via nix copy
@@ -27,6 +29,8 @@ ssh -t $SSH_DEST "sudo mkdir -p $ENVIRONMENT_DIRECTORY"
 ssh -t $SSH_DEST "echo EXTERNAL_USER=$EXTERNAL_USER | sudo tee $ENVIRONMENT_FILE"
 ssh -t $SSH_DEST "echo EXTERNAL_PASSWORD=$EXTERNAL_PASSWORD | sudo tee -a $ENVIRONMENT_FILE"
 ssh -t $SSH_DEST "echo KIOSK_USER_ID=$KIOSK_USER_ID | sudo tee -a $ENVIRONMENT_FILE"
+ssh -t $SSH_DEST "echo DEVICE_NAME=$DEVICE_NAME | sudo tee -a $ENVIRONMENT_FILE"
+ssh -t $SSH_DEST "echo DEVICE_ID=$DEVICE_ID | sudo tee -a $ENVIRONMENT_FILE"
 
 #Copy frontend to device
 echo Copying frontend
