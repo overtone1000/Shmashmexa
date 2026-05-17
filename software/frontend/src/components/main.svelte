@@ -81,6 +81,7 @@
         {
             console.debug("Changing URL to " + command.ChangeDashUrl);
             auto_tab_url=command.ChangeDashUrl;
+            auto_tab_props.action();
             //if(tabs !== undefined && tabs[command.ChangeDash.index] !== undefined)
             //{
             //    tabs[command.ChangeDash.index].action();
