@@ -123,6 +123,7 @@ in
       # Trying a smattering of preferences to get h.265 HEVC streams working
       "media.hevc.enabled" = true;
       #"media.ffmpeg.vaapi.enabled" = true;
+      #media.webrtc.hw.h264.enabled = true; #This is the default
       #"media.rdd-vpx.enabled" = false;
       #"media.rdd-process.enabled" = true;
       #"widget.wayland-dmabuf-vaapi.enabled" = true;
@@ -136,7 +137,8 @@ in
 
   services.cage = {
     enable=true;
-    program="${pkgs.firefox}/bin/firefox --kiosk --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
+    program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #For development and debugging
+    #program="${pkgs.firefox}/bin/firefox --kiosk --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
     #program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
     #program="${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --no-first-run --no-default-browser-check http://127.0.0.1:30125";
     #program="${pkgs.google-chrome}/bin/google-chrome --kiosk --noerrdialogs --no-first-run --no-default-browser-check --incognito --disable-infobars http://127.0.0.1:30125";
