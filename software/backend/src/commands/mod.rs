@@ -7,7 +7,7 @@ pub struct ChangeDashData {url:String}
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum Command
 {
-    ChangeDashUrl(String),
+    AutoTab(String),
     SetScreenState(bool)
 }
 
@@ -27,7 +27,7 @@ mod tests {
 
     #[test]
     fn serialization() {
-        check_serialization(&Command::ChangeDashUrl( "https://www.example.com".to_string()));
+        check_serialization(&Command::AutoTab( "https://www.example.com".to_string()));
         check_serialization(&Command::SetScreenState(true));
     }
 }

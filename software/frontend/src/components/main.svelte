@@ -6,7 +6,7 @@
 	import { onMount } from 'svelte';
 	import Time from './time.svelte';
 	import TimerPage, { type Timer, type TimerState as TimerState } from './timer_page.svelte';
-	import type { Command } from '$lib/commands';
+	import type { Command, TabConfig } from '$lib/commands';
 
     console.debug("Start init.");
 
@@ -56,36 +56,44 @@
         disabled: true //Not ready yet
     };
 
-    let auto_tab_url:string|null = $state(null);
+    
+
+    let tab_config= $state<TabConfig|null>(null);
+
     let auto_tab_props = $derived(
         {
             action: () => {
-                main={
-                    field: MainField.iframe,
-                    iframe_meta:{
-                        url: auto_tab_url,
-                        title: "Automatic Tab"
+                if(tab_config!==null)
+                {
+                    main={
+                        field: MainField.iframe,
+                        iframe_meta:{
+                            url: tab_config.url,
+                            title: "Automatic Tab"
+                        }
                     }
                 }
             },
             icon_label: "auto",
             icon_path: mdiRobot,
-            disabled: auto_tab_url===null
+            disabled: tab_config===null
         }
     );
 
     function handle_server_command(command:Command)
     {
         console.debug("Handling command.");
-        if(command.ChangeDashUrl)
+        if(command.AutoTab)
         {
-            console.debug("Changing URL to " + command.ChangeDashUrl);
-            auto_tab_url=command.ChangeDashUrl;
+            console.debug("Received auto tab.");
+
+            console.debug("NEED TO CHECK PRIORITY");
+            console.debug("NEED TO KEEP ALL AUTO TABS RECEIVED AND EXPIRE THEM BASED ON THEIR EXPIRY TIME");
+            console.debug("NEED TO STASH CURRENT TAB");
+            console.debug("NEED AN INVISIBLE PARKING TAB");
+
+            tab_config=command.AutoTab;
             auto_tab_props.action();
-            //if(tabs !== undefined && tabs[command.ChangeDash.index] !== undefined)
-            //{
-            //    tabs[command.ChangeDash.index].action();
-            //}
         }
     }
 

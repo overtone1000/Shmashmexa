@@ -29,7 +29,7 @@ pub async fn get_has_client(external_core:ExternalCore, config:&MQTTConfiguratio
     };
 
     add_cmp(monitor_switch(&config.id, &config.name, kiosk_uid));
-    add_cmp(remote_url_set(&config.id, &config.name, external_core));
+    add_cmp(auto_tab_set(&config.id, &config.name, external_core));
 
     let device=HomeAssistantDeviceConfiguration::new(
         config.id.to_string(),
@@ -76,25 +76,14 @@ fn monitor_switch(device_id:&str, device_name:&str, kiosk_uid:u64)->(String,Home
     )
 }
 
-fn remote_url_set(device_id:&str, device_name:&str, external_core:ExternalCore)->(String,HomeAssistantDeviceComponent)
+fn auto_tab_set(device_id:&str, device_name:&str, external_core:ExternalCore)->(String,HomeAssistantDeviceComponent)
 {
-    let handle_state_change =move |new_url:String|->Option<String>
+    let handle_state_change =move |tab_config:String|->Option<String>
     {
-        match str::parse::<hyper::Uri>(&new_url)
+        let command:Command=Command::AutoTab(tab_config.to_string());
+        match external_core.command_sender.send(command)
         {
-            Ok(_) => {
-
-                //ChangeDash
-                let command:Command=Command::ChangeDashUrl(new_url.to_string());
-                match external_core.command_sender.send(command)
-                {
-                    Ok(_) => Some(new_url),
-                    Err(e) => {
-                        eprintln!("{:?}",e);
-                        None
-                    },
-                }
-            },
+            Ok(_) => Some(tab_config),
             Err(e) => {
                 eprintln!("{:?}",e);
                 None
@@ -103,12 +92,12 @@ fn remote_url_set(device_id:&str, device_name:&str, external_core:ExternalCore)-
     };
 
     (
-        "url_set".to_string(),
+        "auto_tab".to_string(),
         Text::new(
             device_id,
             device_name,
-            "url",
-            "URL",
+            "auto_tab",
+            "Auto Tab",
             Box::new(handle_state_change)
         )
     )
