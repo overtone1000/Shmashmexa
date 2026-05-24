@@ -4,6 +4,11 @@ export type TabConfig = {
     timeout_seconds:number
 };
 
+export type AutoTabEntry = {
+    config:TabConfig,
+    expiry:Date
+};
+
 export type Command = {
-    AutoTab?:TabConfig
+    AutoTab?:string
 }

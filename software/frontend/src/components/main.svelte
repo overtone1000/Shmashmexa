@@ -6,9 +6,9 @@
 	import { onMount } from 'svelte';
 	import Time from './time.svelte';
 	import TimerPage, { type Timer, type TimerState as TimerState } from './timer_page.svelte';
-	import type { Command, TabConfig } from '$lib/commands';
+	import type { AutoTabEntry, Command, TabConfig } from '$lib/commands';
 
-    console.debug("Start init.");
+    console.debug("Starting main.");
 
     enum MainField {
         iframe,
@@ -28,6 +28,14 @@
         field:MainField,
         iframe_meta?:IFrameMeta
         component_meta?:ComponentType
+    };
+
+
+    type TabsConfig = {
+        label:string,
+        title:string,
+        icon_path:string,
+        url:string
     };
 
     let main:Main|undefined = $state(undefined);
@@ -56,19 +64,33 @@
         disabled: true //Not ready yet
     };
 
-    
+    function set_manual_tab(tab_props:TabProps)
+    {
+        manual_tab_props=tab_props;
+        active_tab_props=tab_props;
+        //tab_props.action(); //Don't need to do this, it will run in the effect below.
+    }
 
-    let tab_config= $state<TabConfig|null>(null);
+    let manual_tab_props=$state<TabProps|null>(null);
+    let auto_tab_config=$state<TabConfig|null>(null);
+
+    let active_tab_props=$state<TabProps|null>(null);
+
+    $effect(()=>{
+        active_tab_props?.action();
+    });
+        
+    let auto_tabs:Set<AutoTabEntry>=new Set();
 
     let auto_tab_props = $derived(
         {
             action: () => {
-                if(tab_config!==null)
+                if(auto_tab_config!==null)
                 {
                     main={
                         field: MainField.iframe,
                         iframe_meta:{
-                            url: tab_config.url,
+                            url: auto_tab_config.url,
                             title: "Automatic Tab"
                         }
                     }
@@ -76,24 +98,79 @@
             },
             icon_label: "auto",
             icon_path: mdiRobot,
-            disabled: tab_config===null
+            disabled: auto_tab_config===null
         }
     );
+
+    function update_auto_tab_state(update_active_tab:boolean)
+    {
+        console.debug("Updating auto tab state.",update_active_tab);
+
+        let selected_config:undefined|AutoTabEntry=undefined;
+        const now=new Date();
+        for(const auto_tab_entry of auto_tabs)
+        {
+            if(auto_tab_entry.expiry<now)
+            {
+                auto_tabs.delete(auto_tab_entry);
+            }
+            else
+            {
+                if(selected_config===undefined || 
+                    auto_tab_entry.config.priority>selected_config.config.priority ||
+                    (
+                        auto_tab_entry.config.priority==selected_config.config.priority &&
+                        auto_tab_entry.expiry<selected_config.expiry
+                    )
+                )
+                {
+                    selected_config=auto_tab_entry;
+                }
+            }
+        }
+
+        console.debug("Selected state is",selected_config);
+
+        if(selected_config!==undefined)
+        {
+            if(selected_config.config!==auto_tab_config)
+            {
+                auto_tab_config=selected_config.config;   
+            }
+            if(update_active_tab)
+            {
+                active_tab_props=auto_tab_props;
+            }
+            let wait=(selected_config.expiry.getTime()-now.getTime());
+            console.debug("Setting timeout for update.",wait);
+            setTimeout(()=>{update_auto_tab_state(false)},wait);
+        }
+        else
+        {
+            auto_tab_config=null;
+            if(active_tab_props!==manual_tab_props)
+            {
+                active_tab_props=manual_tab_props;
+            }
+        }
+    }
 
     function handle_server_command(command:Command)
     {
         console.debug("Handling command.");
         if(command.AutoTab)
         {
-            console.debug("Received auto tab.");
+            let auto_tab:TabConfig=JSON.parse(command.AutoTab);
+            console.debug("Received auto tab.",auto_tab);
+            let expiry:Date = new Date(Date.now()+auto_tab.timeout_seconds*1000);
 
-            console.debug("NEED TO CHECK PRIORITY");
-            console.debug("NEED TO KEEP ALL AUTO TABS RECEIVED AND EXPIRE THEM BASED ON THEIR EXPIRY TIME");
-            console.debug("NEED TO STASH CURRENT TAB");
-            console.debug("NEED AN INVISIBLE PARKING TAB");
+            const entry:AutoTabEntry = {
+                config:auto_tab,
+                expiry:expiry
+            };
 
-            tab_config=command.AutoTab;
-            auto_tab_props.action();
+            auto_tabs.add(entry);
+            update_auto_tab_state(true);
         }
     }
 
@@ -121,13 +198,6 @@
         });
     };
 
-    type TabsConfig = {
-        label:string,
-        title:string,
-        icon_path:string,
-        url:string
-    };
-
     function build_tabs(tabs_config:TabsConfig[]) {
         if(tabs_config.length>0)
         {
@@ -153,7 +223,7 @@
             }
 
             //Default to zero
-            tabs[0].action();
+            set_manual_tab(tabs[0]);
         }
     }
 
@@ -179,8 +249,6 @@
         open_socket();
         get_tabs();
     });
-
-    console.debug("End init.");
 
 </script>
 
