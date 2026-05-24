@@ -8,7 +8,8 @@ pub struct ChangeDashData {url:String}
 pub enum Command
 {
     AutoTab(String),
-    SetScreenState(bool)
+    SetScreenState(bool),
+    PhotoprismKey(String)
 }
 
 #[cfg(test)]

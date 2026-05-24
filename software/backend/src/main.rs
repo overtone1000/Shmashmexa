@@ -12,6 +12,8 @@ const KIOSK_USER_ID_ENV_KEY:&str="KIOSK_USER_ID";
 const DEVICE_MQTT_NAME_ENV_KEY:&str="DEVICE_NAME";
 const DEVICE_MQTT_ID_ENV_KEY:&str="DEVICE_ID";
 
+const PHOTOPRISM_KEY_ENV_KEY:&str="PHOTOPRISM_KEY";
+
 const PROD_INTERNAL_SERVICE_DIR:&str="/var/www/internal";
 const PROD_CONFIG_DIR:&str="/var/www/config";
 const PROD_INTERNAL_PORT:u16=30125;
@@ -98,6 +100,17 @@ async fn main() {
         }
     };
 
+    let photoprism_key:String = match std::env::var(PHOTOPRISM_KEY_ENV_KEY)
+    {
+        Ok(val)=>{
+            val
+        },
+        Err(_)=>{
+            eprintln!("Must provide photoprism key as an environment variable.");
+            return;
+        }
+    };
+
     let auth:Auth=Auth{
         user,
         password
@@ -121,11 +134,29 @@ async fn main() {
     {
         true=>{
             println!("Running in development mode.");
-            InitializationParameters::new(DEV_INTERNAL_SERVICE_DIR,DEV_CONFIG_DIR,DEV_INTERNAL_PORT,DEV_EXTERNAL_PORT,auth,kiosk_uid,mqtt_config)
+            InitializationParameters::new(
+                DEV_INTERNAL_SERVICE_DIR,
+                DEV_CONFIG_DIR,
+                DEV_INTERNAL_PORT,
+                DEV_EXTERNAL_PORT,
+                auth,
+                kiosk_uid,
+                mqtt_config,
+                photoprism_key
+            )
         },
         false=>{
             println!("Running in production mode.");
-            InitializationParameters::new(PROD_INTERNAL_SERVICE_DIR,PROD_CONFIG_DIR,PROD_INTERNAL_PORT,PROD_EXTERNAL_PORT,auth,kiosk_uid,mqtt_config)
+            InitializationParameters::new(
+                PROD_INTERNAL_SERVICE_DIR,
+                PROD_CONFIG_DIR,
+                PROD_INTERNAL_PORT,
+                PROD_EXTERNAL_PORT,
+                auth,
+                kiosk_uid,
+                mqtt_config,
+                photoprism_key
+            )
         }
     };
 

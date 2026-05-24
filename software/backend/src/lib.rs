@@ -31,12 +31,22 @@ pub struct InitializationParameters
     external_port:u16,
     auth:Auth,
     kiosk_uid:u64,
-    mqtt_config:MQTTConfiguration
+    mqtt_config:MQTTConfiguration,
+    photoprism_key:String
 }
 
 impl InitializationParameters
 {
-    pub fn new(internal_service_static_directory:&str, config_static_directory:&str, internal_port:u16, external_port:u16, auth:Auth, kiosk_uid:u64, mqtt_config:MQTTConfiguration)->InitializationParameters
+    pub fn new(
+        internal_service_static_directory:&str,
+        config_static_directory:&str,
+        internal_port:u16,
+        external_port:u16,
+        auth:Auth,
+        kiosk_uid:u64,
+        mqtt_config:MQTTConfiguration,
+        photoprism_key:String
+    )->InitializationParameters
     {
         InitializationParameters { 
             internal_service_static_directory:internal_service_static_directory.to_string(),
@@ -45,7 +55,8 @@ impl InitializationParameters
             external_port,
             auth,
             kiosk_uid,
-            mqtt_config
+            mqtt_config,
+            photoprism_key
         }
     }
 }

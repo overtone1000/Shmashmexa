@@ -10,5 +10,6 @@ export type AutoTabEntry = {
 };
 
 export type Command = {
-    AutoTab?:string
+    AutoTab?:string,
+    PhotoprismKey?:string
 }

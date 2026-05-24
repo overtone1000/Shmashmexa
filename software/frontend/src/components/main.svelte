@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mdiClock } from '@mdi/js';
+    import { mdiClock, mdiImageMultiple } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
     import { mdiRobot } from '@mdi/js';
     import IconTab, { type TabProps } from './icon_tab.svelte';
@@ -7,6 +7,7 @@
 	import Time from './time.svelte';
 	import TimerPage, { type Timer, type TimerState as TimerState } from './timer_page.svelte';
 	import type { AutoTabEntry, Command, TabConfig } from '$lib/commands';
+	import Slideshow from './slideshow.svelte';
 
     console.debug("Starting main.");
 
@@ -21,7 +22,8 @@
     };
 
     enum ComponentType {
-        clock
+        clock,
+        slideshow
     };
 
     type Main = {
@@ -62,6 +64,18 @@
         icon_label: "clock",
         icon_path: mdiClock,
         disabled: true //Not ready yet
+    };
+
+    const slideshow:TabProps = {
+        action: () => {
+            main={
+                field: MainField.component,
+                component_meta:ComponentType.slideshow
+            }
+        },
+        icon_label: "slideshow",
+        icon_path: mdiImageMultiple,
+        disabled: false
     };
 
     function set_manual_tab(tab_props:TabProps)
@@ -155,6 +169,7 @@
         }
     }
 
+    let photoprism_key=$state<string|undefined>(undefined);
     function handle_server_command(command:Command)
     {
         console.debug("Handling command.");
@@ -180,8 +195,13 @@
                 console.error("Malformed auto tab.",auto_tab);
             }
         }
+        else if(command.PhotoprismKey)
+        {
+            photoprism_key=command.PhotoprismKey;
+        }
     }
 
+    //let socket:WebSocket|undefined=$state(undefined);
     function open_socket(){
         const socket_url = "ws:/"+location.host;
         console.debug("Opening websocket on");
@@ -266,6 +286,7 @@
             <IconTab --right_margin="4px" props={tab}/>
         {/each}
         <IconTab props={clock}/>
+        <IconTab props={slideshow}/>
         <IconTab props={auto_tab_props}/>
         <div class="spacer"></div>
         <Time/>
@@ -281,6 +302,8 @@
         {:else if main.field === MainField.component && main.component_meta !== undefined}
             {#if main.component_meta === ComponentType.clock}
                 <TimerPage timers={timers}/>
+            {:else if main.component_meta === ComponentType.slideshow}
+                <Slideshow photoprism_key={photoprism_key}/>
             {/if}
         {/if}
     {/if}

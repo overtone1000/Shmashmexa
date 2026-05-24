@@ -54,6 +54,9 @@ impl ExternalService {
                     }
                 }
             },
+            Command::PhotoprismKey(_)=>{
+                eprintln!("Invalid command.");
+            }
         }
 
         Ok(())

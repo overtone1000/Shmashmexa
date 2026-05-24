@@ -1,12 +1,12 @@
 use std::{collections::{HashMap, HashSet, VecDeque}, sync::Arc, thread::current, time::{Duration, Instant}};
 
 use futures_util::stream::{SplitSink, SplitStream};
-use hyper::{Method, Request, Response, body::Incoming, upgrade::Upgraded};
+use hyper::{HeaderMap, Method, Request, Response, body::Incoming, header, upgrade::Upgraded};
 use hyper_services::{
     commons::HandlerResult, request_processing::get_request_body_as_string, response_building::{bad_request, box_existing_full, box_existing_response, bytes_to_boxed_body}, service::stateful_service::StatefulHandler
 };
 
-use hyper_tungstenite::{HyperWebsocket, WebSocketStream, tungstenite};
+use hyper_tungstenite::{HyperWebsocket, WebSocketStream, tungstenite::{self, Utf8Bytes}};
 use hyper_util::rt::TokioIo;
 use tokio::sync::{Mutex, mpsc::{self, UnboundedReceiver, UnboundedSender}};
 use tungstenite::Message;
@@ -25,19 +25,28 @@ pub struct InternalService {
     config_static_directory:String,
     command_receiver:Arc<Mutex<UnboundedReceiver<Command>>>,
     sinks:Arc<Mutex<HashMap<u64,SplitSink<WebSocketStream<TokioIo<Upgraded>>,Message>>>>,
-    sink_handler:Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>
+    sink_handler:Arc<Mutex<Option<tokio::task::JoinHandle<()>>>>,
+    photoprism_key:String,
+    //header_map:Option<HeaderMap>
 }
 
 impl InternalService
 {
-    pub fn new(initialization_parameters:&crate::InitializationParameters, command_receiver:Arc<Mutex<UnboundedReceiver<Command>>>)->InternalService
-    {        
+    pub fn new(initialization_parameters:&crate::InitializationParameters,
+        command_receiver:Arc<Mutex<UnboundedReceiver<Command>>>
+    )->InternalService
+    {
+        //let mut header_map:HeaderMap=HeaderMap::new();
+        //header_map.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN,header::HeaderValue::from_static("*"));
+                        
         InternalService { 
             internal_service_static_directory: initialization_parameters.internal_service_static_directory.clone(),
             config_static_directory: initialization_parameters.config_static_directory.clone(),
             command_receiver,
             sinks:Arc::new(Mutex::new(HashMap::new())),
-            sink_handler:Arc::new(Mutex::new(None))
+            sink_handler:Arc::new(Mutex::new(None)),
+            photoprism_key:initialization_parameters.photoprism_key.to_string(),
+            //header_map:Some(header_map)
         }
     }
 
@@ -117,6 +126,25 @@ impl InternalService
         }
     }
 
+    async fn sink_initialization(&self, sink:&mut SplitSink<WebSocketStream<TokioIo<Upgraded>>, Message>)->(){
+        println!("Sink initializing.");
+        match serde_json::to_string(&Command::PhotoprismKey(self.photoprism_key.clone()))
+        {
+            Ok(key)=>{
+                match sink.send(Message::Text(Utf8Bytes::from(key))).await
+                {
+                    Ok(_)=>(),
+                    Err(e)=>{
+                        eprintln!("{:?}",e);
+                    }
+                }
+            },
+            Err(e)=>{
+                eprintln!("{:?}",e);
+            }
+        };
+    }
+
     async fn handle_websocket(self, websocket: HyperWebsocket) -> () {       
 
         println!("Serving websocket");
@@ -128,7 +156,11 @@ impl InternalService
             },
         };
 
-        let (sink,stream) =websocketstream.split();
+        let (mut sink,stream) =websocketstream.split();
+
+        //Send initialization on sink
+        self.sink_initialization(&mut sink).await;
+
         let command_receiver = self.command_receiver;        
 
         //Add the sink to the sink vector. Make sure a sink handler is running. If it is, let it continue.
@@ -155,7 +187,10 @@ impl InternalService
             sink_key
         };
 
-       match tokio::spawn(async move {Self::handle_websocket_stream(stream).await}).await
+       match tokio::spawn(
+        async move {
+            Self::handle_websocket_stream(stream).await
+        }).await
        {
             Ok(_)=>(),
             Err(e) => {
@@ -230,11 +265,12 @@ impl StatefulHandler for InternalService {
                         if parts.uri.path().starts_with(CONFIG_PREFACE){
                             let final_path=parts.uri.path().split_at(CONFIG_PREFACE.len()).1;
                             //println!("Serving config {:?} - {:?}",&self.config_static_directory,final_path);
-                            hyper_services::response_building::send_file(&self.config_static_directory,final_path).await
+                            
+                            hyper_services::response_building::send_file(&self.config_static_directory,final_path,None).await
                         }
                         else {
                             //println!("Serving base.");
-                            hyper_services::response_building::send_file(&self.internal_service_static_directory,parts.uri.path()).await
+                            hyper_services::response_building::send_file(&self.internal_service_static_directory,parts.uri.path(),None).await
                         }
                     },
                     method=>{
