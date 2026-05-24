@@ -162,15 +162,23 @@
         {
             let auto_tab:TabConfig=JSON.parse(command.AutoTab);
             console.debug("Received auto tab.",auto_tab);
-            let expiry:Date = new Date(Date.now()+auto_tab.timeout_seconds*1000);
 
-            const entry:AutoTabEntry = {
-                config:auto_tab,
-                expiry:expiry
-            };
+            if(auto_tab && auto_tab.url && auto_tab.priority && auto_tab.timeout_seconds)
+            {
+                let expiry:Date = new Date(Date.now()+auto_tab.timeout_seconds*1000);
 
-            auto_tabs.add(entry);
-            update_auto_tab_state(true);
+                const entry:AutoTabEntry = {
+                    config:auto_tab,
+                    expiry:expiry
+                };
+
+                auto_tabs.add(entry);
+                update_auto_tab_state(true);
+            }
+            else
+            {
+                console.error("Malformed auto tab.",auto_tab);
+            }
         }
     }
 
