@@ -31,7 +31,7 @@ ssh -t $SSH_DEST "echo EXTERNAL_PASSWORD=$EXTERNAL_PASSWORD | sudo tee -a $ENVIR
 ssh -t $SSH_DEST "echo KIOSK_USER_ID=$KIOSK_USER_ID | sudo tee -a $ENVIRONMENT_FILE"
 ssh -t $SSH_DEST "echo DEVICE_NAME=$DEVICE_NAME | sudo tee -a $ENVIRONMENT_FILE"
 ssh -t $SSH_DEST "echo DEVICE_ID=$DEVICE_ID | sudo tee -a $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo PHOTOPRISM_KEY=$PHOTOPRISM_KEY | sudo tee -a $PHOTOPRISM_KEY"
+ssh -t $SSH_DEST "echo PHOTOPRISM_KEY=$PHOTOPRISM_KEY | sudo tee -a $ENVIRONMENT_FILE"
 
 #Copy frontend to device
 echo Copying frontend
