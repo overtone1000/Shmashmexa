@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { get_album_by_uid, get_all_albums } from "$lib/photoprism/albums";
+	import { get_album_by_uid, get_all_albums, type Album } from "$lib/photoprism/albums";
 	import { get_download_token } from "$lib/photoprism/commons";
-    import { DEVKEY } from "$lib/photoprism/devsecrets";
-	import { download_photo, get_random_photo_uid_from_album } from "$lib/photoprism/photos";
-	import { mdiLockOpen } from "@mdi/js";
+    //import { DEVKEY } from "$lib/photoprism/devsecrets";
+	import { download_photo, get_random_photo_uid_from_album, type Photo } from "$lib/photoprism/photos";
 
     export type SlideshowProps =
     {
@@ -36,24 +35,24 @@
         {
             console.debug("Updating image");
 
-            let album=undefined;
-            let photo=undefined;
-            let download_token=undefined;
-            let downloaded_photo=undefined;
+            let album:(Album|null)=null;
+            let photo:(Photo|null)=null;
+            let download_token:(string|null)=null;
+            let downloaded_photo:(Blob|null)=null;
 
-            while(album===undefined){
+            while(album===null){
                 album=await get_album_by_uid(ALBUM_UID,BASE,key);
             }
 
-            while(photo===undefined){
+            while(photo===null){
                 photo = await get_random_photo_uid_from_album(album,BASE,key);
             }
 
-            while(download_token===undefined){
+            while(download_token===null){
                 download_token = await get_download_token(BASE,key);
             }
 
-            while(downloaded_photo===undefined){
+            while(downloaded_photo===null){
                 downloaded_photo=await download_photo(photo,BASE,key,download_token);
             }
             
@@ -62,8 +61,8 @@
         }
     }
 
-    //let update=()=>{update_image(props.photoprism_key);}
-    let update=()=>{update_image(DEVKEY);}
+    let update=()=>{update_image(props.photoprism_key);}
+    //let update=()=>{update_image(DEVKEY);}
 
     update();
 

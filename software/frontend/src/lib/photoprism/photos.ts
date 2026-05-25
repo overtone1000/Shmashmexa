@@ -1,5 +1,5 @@
 import type { Album } from "./albums";
-import { photoprism_get_blob, photoprism_get_json } from "./commons";
+import { DEFAULT_TIMEOUT, photoprism_get_blob, photoprism_get_json, type GenericObject } from "./commons";
 
 export function bounded_random_integer(minimum:number,maximum:number){
     return Math.floor(Math.random()*(maximum-minimum+1)+minimum);
@@ -13,14 +13,22 @@ export async function get_random_photo_uid_from_album(album:Album, base:string, 
 {
     const offset=bounded_random_integer(0,album.PhotoCount-1);
     let endpoint="/photos?count=1&offset="+offset+"&s="+album.UID;
-    let result:Photo[]=await photoprism_get_json(base,endpoint,key);
-    return result[0];
+    let result=await photoprism_get_json(base,endpoint,key,DEFAULT_TIMEOUT);
+
+    if(result!==null)
+    {
+        return (result as Photo[])[0];
+    }
+    else
+    {
+        return null;
+    }
 }
 
 export async function download_photo(photo:Photo, base:string, key:string, download_token:string)
 {
     let endpoint="/photos/"+photo.UID+"/dl?t="+download_token;
     console.debug(endpoint);
-    let result=await photoprism_get_blob(base,endpoint,key);
+    let result=await photoprism_get_blob(base,endpoint,key,30000); //allow for a long download time
     return result;
 }
