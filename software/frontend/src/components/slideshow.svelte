@@ -38,8 +38,6 @@
 
     async function update_image()
     {
-        clearTimeout(last_timeout);
-
         //const KEY=props.photoprism_key;
         const KEY=DEVKEY; //Enable for rapid development
         if(KEY!==undefined)
@@ -94,6 +92,7 @@
             
         }
 
+        clearTimeout(last_timeout);
         last_timeout=setTimeout(update_image, millis_until_next_image);
     }
 

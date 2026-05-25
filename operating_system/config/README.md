@@ -18,4 +18,8 @@ iwctl
 device list
 station $DEVICE_NAME connect $SSID
 station $DEVICE_NAME show
+station $DEVICE_NAME get-networks
+station $DEVICE_NAME connect-hidden $SSID
+known-networks list
+known-networks $SSID forget
 ```
