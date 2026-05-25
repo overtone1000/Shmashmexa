@@ -13,25 +13,16 @@
 
     const BASE="https://photos.overdesigned.org/api/v1";
     const ALBUM_UID="atbl6hj66z1i4hxf";
-
-    //get("/albums?count=5");
-    
-    /*
-    console.debug("Getting albums.");
-    get_all_albums(base,DEVKEY).then(
-        (result)=>{
-            console.debug(result);
-        }
-    );
-    */
+   
 
     let image:string|null = $state(null);
 
     const millis_until_next_image=30000;
 
-    async function update_image(key:string|undefined)
+    async function update_image()
     {
-        if(key!==undefined)
+        const KEY=props.photoprism_key;
+        if(KEY!==undefined)
         {
             console.debug("Updating image");
 
@@ -41,32 +32,29 @@
             let downloaded_photo:(Blob|null)=null;
 
             while(album===null){
-                album=await get_album_by_uid(ALBUM_UID,BASE,key);
+                album=await get_album_by_uid(ALBUM_UID,BASE,KEY);
             }
 
             while(photo===null){
-                photo = await get_random_photo_uid_from_album(album,BASE,key);
+                photo = await get_random_photo_uid_from_album(album,BASE,KEY);
             }
 
             while(download_token===null){
-                download_token = await get_download_token(BASE,key);
+                download_token = await get_download_token(BASE,KEY);
             }
 
             while(downloaded_photo===null){
-                downloaded_photo=await download_photo(photo,BASE,key,download_token);
+                downloaded_photo=await download_photo(photo,BASE,KEY,download_token);
             }
             
             console.debug(downloaded_photo);
             image=URL.createObjectURL(downloaded_photo);   
         }
+
+        setTimeout(update_image, millis_until_next_image);
     }
 
-    let update=()=>{update_image(props.photoprism_key);}
-    //let update=()=>{update_image(DEVKEY);}
-
-    update();
-
-    setInterval(update, millis_until_next_image);
+    update_image();
 </script>
 
 <div class="outer">
