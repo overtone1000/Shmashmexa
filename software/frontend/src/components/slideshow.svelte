@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { get_album_by_uid, get_all_albums } from "$lib/photoprism/albums";
 	import { get_download_token } from "$lib/photoprism/commons";
-    //import { DEVKEY } from "$lib/photoprism/devsecrets";
+    import { DEVKEY } from "$lib/photoprism/devsecrets";
 	import { download_photo, get_random_photo_uid_from_album } from "$lib/photoprism/photos";
+	import { mdiLockOpen } from "@mdi/js";
 
     export type SlideshowProps =
     {
@@ -29,38 +30,44 @@
 
     const millis_until_next_image=30000;
 
-    function update_image(key:string)
+    function update_image(key:string|undefined)
     {
-        get_album_by_uid(ALBUM_UID,BASE,key).then(
-            (album)=>{
-                get_random_photo_uid_from_album(album,BASE,key).then(
-                    (photo)=>{
-                        get_download_token(BASE,key).then(
-                            (download_token)=>{
-                                download_photo(photo,BASE,key,download_token).then(
-                                    (downloaded_photo)=>{
-                                        console.debug(downloaded_photo);
-                                        image=URL.createObjectURL(downloaded_photo);
-                                    }
-                                )
-                            }
-                        )
-                    }
-                )
+        if(key!==undefined)
+        {
+            console.debug("Updating image");
+
+            let album=undefined;
+            let photo=undefined;
+            let download_token=undefined;
+            let downloaded_photo=undefined;
+
+            while(album===undefined){
+                get_album_by_uid(ALBUM_UID,BASE,key).then((result)=>{album=result;})
             }
-        );
-        setTimeout(()=>{update_image(key)},millis_until_next_image);
+
+            while(photo===undefined){
+                 get_random_photo_uid_from_album(album,BASE,key).then((result)=>{photo=result;})
+            }
+
+            while(download_token===undefined){
+                get_download_token(BASE,key).then((result)=>{download_token=result;})
+            }
+
+            while(downloaded_photo===undefined){
+                download_photo(photo,BASE,key,download_token).then((result)=>{downloaded_photo=result;})
+            }
+            
+            console.debug(downloaded_photo);
+            image=URL.createObjectURL(downloaded_photo);   
+        }
     }
 
-    $effect(
-        ()=>
-        {
-            if(props.photoprism_key!==undefined)
-            {
-                update_image(props.photoprism_key);
-            }
-        }
-    );
+    //let update=()=>{update_image(props.photoprism_key);}
+    let update=()=>{update_image(DEVKEY);}
+
+    update();
+
+    setInterval(update, millis_until_next_image);
 </script>
 
 <div class="outer">
