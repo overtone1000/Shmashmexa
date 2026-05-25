@@ -11,5 +11,6 @@ export type AutoTabEntry = {
 
 export type Command = {
     AutoTab?:string,
-    PhotoprismKey?:string
+    PhotoprismKey?:string,
+    SetScreenState?:boolean
 }

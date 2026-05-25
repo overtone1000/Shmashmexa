@@ -123,10 +123,10 @@ async fn main() {
         name: device_mqtt_name,
         origin_name: "Tyler Moore".to_string(),
         origin_sw: "0.1.0".to_string(),
-        client_id: device_mqtt_id+"_client",
+        client_id: device_mqtt_id.to_string()+"_client",
         server_url: "10.10.10.10".to_string(),
         server_port: 1883,
-        object_id: "faux_show".to_string(),
+        object_id: device_mqtt_id.to_string(),
         discovery_prefix: has_mqtt::mqtt_client::DEFAULT_DISCOVERY_PREFIX.to_string(),
     };
 

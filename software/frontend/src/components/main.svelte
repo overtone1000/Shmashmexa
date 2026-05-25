@@ -41,6 +41,7 @@
     };
 
     let main:Main|undefined = $state(undefined);
+    let parked:Main|undefined = undefined;
 
     const timers:Timer[] = $state([]);
 
@@ -195,9 +196,21 @@
                 console.error("Malformed auto tab.",auto_tab);
             }
         }
-        else if(command.PhotoprismKey)
+        
+        if(command.PhotoprismKey)
         {
             photoprism_key=command.PhotoprismKey;
+        }
+        
+        if(command.SetScreenState==false)
+        {
+            parked=main;
+            main=undefined;
+        }
+        else if(command.SetScreenState==true)
+        {
+            main=parked;
+            parked=undefined;
         }
     }
 
@@ -280,7 +293,7 @@
 
 </script>
 
-<div class="main">
+<div class="whole_display">
     <div class="tab-row">
         {#each tabs as tab}
             <IconTab --right_margin="4px" props={tab}/>
@@ -295,10 +308,9 @@
     </div>
     {#if main !== undefined}
         {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
-            <iframe class="full-width" src={main.iframe_meta.url} title={main.iframe_meta.title}>
+            <iframe class="full-size" src={main.iframe_meta.url} title={main.iframe_meta.title}>
                 <p>iframe unsupported</p>
             </iframe>
-            <div class="hide-cursor"></div>
         {:else if main.field === MainField.component && main.component_meta !== undefined}
             {#if main.component_meta === ComponentType.clock}
                 <TimerPage timers={timers}/>
@@ -310,12 +322,17 @@
 </div>
 
 <style>
-    .full-width
+    .full-size
     {
         width:100%;
+        height:100%;
+        min-width:0%;
+        min-height:0%;
         flex-grow: 1;
+        flex-shrink: 1;
+        overflow-y: hidden;
     }
-    .main
+    .whole_display
     {
         width: 100vw;
         height:100vh;
@@ -339,11 +356,4 @@
     * {
         color-scheme: dark;
     }
-    /*This is for kiosks, so hide the cursor*/
-    /*Doesn't work with iframe!*/
-    /*
-    * {
-        cursor: none;
-    }
-    */
 </style>

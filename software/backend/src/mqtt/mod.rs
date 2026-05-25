@@ -28,7 +28,7 @@ pub async fn get_has_client(external_core:ExternalCore, config:&MQTTConfiguratio
         cmps_hm.insert(kvp.0,kvp.1);
     };
 
-    add_cmp(monitor_switch(&config.id, &config.name, kiosk_uid));
+    add_cmp(monitor_switch(&config.id, &config.name, kiosk_uid, external_core.clone()));
     add_cmp(auto_tab_set(&config.id, &config.name, external_core));
 
     let device=HomeAssistantDeviceConfiguration::new(
@@ -50,10 +50,19 @@ pub async fn get_has_client(external_core:ExternalCore, config:&MQTTConfiguratio
     ).await
 }
 
-fn monitor_switch(device_id:&str, device_name:&str, kiosk_uid:u64)->(String,HomeAssistantDeviceComponent)
+fn monitor_switch(device_id:&str, device_name:&str, kiosk_uid:u64, external_core:ExternalCore)->(String,HomeAssistantDeviceComponent)
 {
     let handle_state_change =move |state:SwitchState|->Option<SwitchState>
     {
+        let command:Command=Command::SetScreenState(state.as_bool());
+        match external_core.command_sender.send(command)
+        {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{:?}",e);
+            },
+        }
+
         match crate::device::set_screen_state(state.as_bool(),&kiosk_uid)
         {
             Ok(_)=>Some(state),

@@ -17,6 +17,4 @@ impl ExternalCore
             command_sender
         }
     }
-
-
 }
