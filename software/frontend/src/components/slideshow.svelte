@@ -3,7 +3,7 @@
 	import { get_download_token } from "$lib/photoprism/commons";
     import { DEVKEY } from "$lib/photoprism/devsecrets";
 	import { download_photo, get_random_photo_uid_from_album, type Photo } from "$lib/photoprism/photos";
-	import { onMount } from "svelte";
+	import { onDestroy, onMount } from "svelte";
     import { fly } from 'svelte/transition';
 
     export type SlideshowProps =
@@ -33,8 +33,7 @@
     );
 
     const millis_until_next_image=30000;
-
-    let last_timeout:number|undefined;
+    let last_photo_offset:number=-1;
 
     async function update_image()
     {
@@ -44,29 +43,16 @@
         {
             console.debug("Updating image");
 
-            let album:(Album|null)=null;
-            let photo:(Photo|null)=null;
-            let download_token:(string|null)=null;
-            let downloaded_photo:(Blob|null)=null;
+            const album:(Album|null)=await get_album_by_uid(ALBUM_UID,BASE,KEY);
+            if(album===null){return;}
+            const photo_result=await get_random_photo_uid_from_album(album,BASE,KEY,last_photo_offset);
+            if(photo_result===null){return;}
+            const download_token:(string|null)=await get_download_token(BASE,KEY);
+            if(download_token===null){return;}
+            const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,millis_until_next_image);
+            if(downloaded_photo===null){return;}
 
-            while(album===null){
-                album=await get_album_by_uid(ALBUM_UID,BASE,KEY);
-            }
-
-            while(photo===null){
-                photo = await get_random_photo_uid_from_album(album,BASE,KEY);
-            }
-
-            while(download_token===null){
-                download_token = await get_download_token(BASE,KEY);
-            }
-
-            while(downloaded_photo===null){
-                downloaded_photo=await download_photo(photo,BASE,KEY,download_token);
-            }
-            
-            console.debug(downloaded_photo);
-
+            last_photo_offset=photo_result.last_offset;
             const new_image = {blob:downloaded_photo,url:URL.createObjectURL(downloaded_photo)};
 
             if(images.length<1)
@@ -88,17 +74,17 @@
                 images[target]=new_image;
                 image_pointer=target;
             }
-
-            
         }
-
-        clearTimeout(last_timeout);
-        last_timeout=setTimeout(update_image, millis_until_next_image);
     }
 
-    //Do this on mount so first transition works
+    let interval_id:number;
     onMount(()=>{
         update_image();
+        interval_id=setInterval(update_image,millis_until_next_image);
+    });
+
+    onDestroy(()=>{
+        clearInterval(interval_id);
     });
 
     //const FADE={delay:0,duration:1500};
@@ -124,6 +110,7 @@
         flex-grow: 1;
         flex-shrink: 1;
         overflow-y: hidden;
+        overflow-x: hidden;
         display: grid;
         grid-template-columns: 100%;
         grid-template-rows: 100%;

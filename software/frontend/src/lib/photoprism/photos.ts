@@ -9,15 +9,20 @@ export type Photo = {
     UID:string
 }
 
-export async function get_random_photo_uid_from_album(album:Album, base:string, key:string)
+export async function get_random_photo_uid_from_album(album:Album, base:string, key:string, last_offset:number)
 {
-    const offset=bounded_random_integer(0,album.PhotoCount-1);
+    let offset=last_offset;
+    while(offset===last_offset)
+    {
+        offset=bounded_random_integer(0,album.PhotoCount-1);
+    }
     let endpoint="/photos?count=1&offset="+offset+"&s="+album.UID;
+
     let result=await photoprism_get_json(base,endpoint,key,DEFAULT_TIMEOUT);
 
     if(result!==null)
     {
-        return (result as Photo[])[0];
+        return {last_offset:offset, photo:(result as Photo[])[0]};
     }
     else
     {
@@ -25,10 +30,10 @@ export async function get_random_photo_uid_from_album(album:Album, base:string, 
     }
 }
 
-export async function download_photo(photo:Photo, base:string, key:string, download_token:string)
+export async function download_photo(photo:Photo, base:string, key:string, download_token:string, timeout_millis:number)
 {
     let endpoint="/photos/"+photo.UID+"/dl?t="+download_token;
     console.debug(endpoint);
-    let result=await photoprism_get_blob(base,endpoint,key,30000); //allow for a long download time
+    let result=await photoprism_get_blob(base,endpoint,key,timeout_millis); //allow for a long download time
     return result;
 }
