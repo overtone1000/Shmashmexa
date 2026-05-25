@@ -30,7 +30,7 @@
 
     const millis_until_next_image=30000;
 
-    function update_image(key:string|undefined)
+    async function update_image(key:string|undefined)
     {
         if(key!==undefined)
         {
@@ -42,19 +42,19 @@
             let downloaded_photo=undefined;
 
             while(album===undefined){
-                get_album_by_uid(ALBUM_UID,BASE,key).then((result)=>{album=result;})
+                album=await get_album_by_uid(ALBUM_UID,BASE,key);
             }
 
             while(photo===undefined){
-                 get_random_photo_uid_from_album(album,BASE,key).then((result)=>{photo=result;})
+                photo = await get_random_photo_uid_from_album(album,BASE,key);
             }
 
             while(download_token===undefined){
-                get_download_token(BASE,key).then((result)=>{download_token=result;})
+                download_token = await get_download_token(BASE,key);
             }
 
             while(downloaded_photo===undefined){
-                download_photo(photo,BASE,key,download_token).then((result)=>{downloaded_photo=result;})
+                downloaded_photo=await download_photo(photo,BASE,key,download_token);
             }
             
             console.debug(downloaded_photo);
