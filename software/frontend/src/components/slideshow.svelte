@@ -32,11 +32,15 @@
         }
     );
 
-    const millis_until_next_image=30000;
+    const update_interval=30000;
+    //const millis_until_next_image=5000;
     let last_photo_offset:number=-1;
-
+    let last_successful_update:number=0;
+    //let last_update:string=$state("");
+    let current_timeout:number|undefined=undefined;
     async function update_image()
     {
+        //last_update=Date.now().toString() + " " + props.photoprism_key;
         try
         {
             const KEY=props.photoprism_key;
@@ -51,7 +55,7 @@
                 if(photo_result===null){return;}
                 const download_token:(string|null)=await get_download_token(BASE,KEY);
                 if(download_token===null){return;}
-                const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,millis_until_next_image);
+                const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,update_interval);
                 if(downloaded_photo===null){return;}
 
                 last_photo_offset=photo_result.last_offset;
@@ -76,11 +80,15 @@
                     images[target]=new_image;
                     image_pointer=target;
                 }
+
+                last_successful_update=Date.now();
             }
         }
         finally
         {
-            setTimeout(update_image,millis_until_next_image);
+            const time_since_last_success=Date.now()-last_successful_update;
+            const new_timeout=update_interval-time_since_last_success;
+            current_timeout=setTimeout(update_image,new_timeout);
         }
     }
 
@@ -90,9 +98,10 @@
         //interval_id=setInterval(update_image,millis_until_next_image);
     });
 
-    //onDestroy(()=>{
-    //    clearInterval(interval_id);
-    //});
+    onDestroy(()=>{
+        //clearInterval(interval_id);
+        clearTimeout(current_timeout);
+    });
 
     //const FADE={delay:0,duration:1500};
     const FLY_IN={x:200,duration:3000}

@@ -137,9 +137,8 @@ in
 
   services.cage = {
     enable=true;
-    program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #For development and debugging
-    #program="${pkgs.firefox}/bin/firefox --kiosk --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
-    #program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
+    #program="${pkgs.firefox}/bin/firefox --private-window http://127.0.0.1:30125"; #For development and debugging
+    program="${pkgs.firefox}/bin/firefox --kiosk --private-window http://127.0.0.1:30125"; #Tried double dashes but it seemed to break firefox launch.
     #program="${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --no-first-run --no-default-browser-check http://127.0.0.1:30125";
     #program="${pkgs.google-chrome}/bin/google-chrome --kiosk --noerrdialogs --no-first-run --no-default-browser-check --incognito --disable-infobars http://127.0.0.1:30125";
     user="kiosk";

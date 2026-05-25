@@ -19,19 +19,24 @@ DEVICE_ID="faux_show"
 #Copy backend to device and set symlink
 echo Copying via nix copy
 nix copy --extra-experimental-features nix-command --to ssh://$SERVER_IP $NIX_STORE_DIR
-ssh $SERVER_IP "sudo mkdir -p $LINK_DIRECTORY"
-ssh $SERVER_IP "sudo rm -f $LINK_DIRECTORY/$LINK_NAME"
-ssh $SERVER_IP "sudo ln -s $NIX_STORE_DIR $LINK_DIRECTORY/$LINK_NAME"
+ssh $SERVER_IP " \
+    sudo mkdir -p $LINK_DIRECTORY \
+    && sudo rm -f $LINK_DIRECTORY/$LINK_NAME \
+    && sudo ln -s $NIX_STORE_DIR $LINK_DIRECTORY/$LINK_NAME \
+    "
 
 #Set environment file
 echo Setting remote environment file
-ssh -t $SSH_DEST "sudo mkdir -p $ENVIRONMENT_DIRECTORY"
-ssh -t $SSH_DEST "echo EXTERNAL_USER=$EXTERNAL_USER | sudo tee $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo EXTERNAL_PASSWORD=$EXTERNAL_PASSWORD | sudo tee -a $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo KIOSK_USER_ID=$KIOSK_USER_ID | sudo tee -a $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo DEVICE_NAME=$DEVICE_NAME | sudo tee -a $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo DEVICE_ID=$DEVICE_ID | sudo tee -a $ENVIRONMENT_FILE"
-ssh -t $SSH_DEST "echo PHOTOPRISM_KEY=$PHOTOPRISM_KEY | sudo tee -a $ENVIRONMENT_FILE"
+ssh -t $SSH_DEST \
+    " \
+    sudo mkdir -p $ENVIRONMENT_DIRECTORY \
+    && echo EXTERNAL_USER=$EXTERNAL_USER | sudo tee $ENVIRONMENT_FILE \
+    && echo EXTERNAL_PASSWORD=$EXTERNAL_PASSWORD | sudo tee -a $ENVIRONMENT_FILE \
+    && echo KIOSK_USER_ID=$KIOSK_USER_ID | sudo tee -a $ENVIRONMENT_FILE \
+    && echo DEVICE_NAME=$DEVICE_NAME | sudo tee -a $ENVIRONMENT_FILE \
+    && echo DEVICE_ID=$DEVICE_ID | sudo tee -a $ENVIRONMENT_FILE \
+    && echo PHOTOPRISM_KEY=$PHOTOPRISM_KEY | sudo tee -a $ENVIRONMENT_FILE \
+    "
 
 #Copy frontend to device
 echo Copying frontend

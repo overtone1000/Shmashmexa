@@ -33,7 +33,6 @@ export async function get_random_photo_uid_from_album(album:Album, base:string, 
 export async function download_photo(photo:Photo, base:string, key:string, download_token:string, timeout_millis:number)
 {
     let endpoint="/photos/"+photo.UID+"/dl?t="+download_token;
-    console.debug(endpoint);
     let result=await photoprism_get_blob(base,endpoint,key,timeout_millis); //allow for a long download time
     return result;
 }
