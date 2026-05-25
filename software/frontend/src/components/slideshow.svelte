@@ -37,55 +37,62 @@
 
     async function update_image()
     {
-        const KEY=props.photoprism_key;
-        //const KEY=DEVKEY; //Enable for rapid development
-        if(KEY!==undefined)
+        try
         {
-            console.debug("Updating image");
-
-            const album:(Album|null)=await get_album_by_uid(ALBUM_UID,BASE,KEY);
-            if(album===null){return;}
-            const photo_result=await get_random_photo_uid_from_album(album,BASE,KEY,last_photo_offset);
-            if(photo_result===null){return;}
-            const download_token:(string|null)=await get_download_token(BASE,KEY);
-            if(download_token===null){return;}
-            const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,millis_until_next_image);
-            if(downloaded_photo===null){return;}
-
-            last_photo_offset=photo_result.last_offset;
-            const new_image = {blob:downloaded_photo,url:URL.createObjectURL(downloaded_photo)};
-
-            if(images.length<1)
+            const KEY=props.photoprism_key;
+            //const KEY=DEVKEY; //Enable for rapid development
+            if(KEY!==undefined)
             {
-                images.push(new_image);
-                image_pointer=images.length-1;
-            }
-            else
-            {
-                let target:number;
-                if(image_pointer===0)
+                console.debug("Updating image");
+
+                const album:(Album|null)=await get_album_by_uid(ALBUM_UID,BASE,KEY);
+                if(album===null){return;}
+                const photo_result=await get_random_photo_uid_from_album(album,BASE,KEY,last_photo_offset);
+                if(photo_result===null){return;}
+                const download_token:(string|null)=await get_download_token(BASE,KEY);
+                if(download_token===null){return;}
+                const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,millis_until_next_image);
+                if(downloaded_photo===null){return;}
+
+                last_photo_offset=photo_result.last_offset;
+                const new_image = {blob:downloaded_photo,url:URL.createObjectURL(downloaded_photo)};
+
+                if(images.length<1)
                 {
-                    target=1;
+                    images.push(new_image);
+                    image_pointer=images.length-1;
                 }
                 else
                 {
-                    target=0;
+                    let target:number;
+                    if(image_pointer===0)
+                    {
+                        target=1;
+                    }
+                    else
+                    {
+                        target=0;
+                    }
+                    images[target]=new_image;
+                    image_pointer=target;
                 }
-                images[target]=new_image;
-                image_pointer=target;
             }
+        }
+        finally
+        {
+            setTimeout(update_image,millis_until_next_image);
         }
     }
 
-    let interval_id:number;
+    //let interval_id:number;
     onMount(()=>{
         update_image();
-        interval_id=setInterval(update_image,millis_until_next_image);
+        //interval_id=setInterval(update_image,millis_until_next_image);
     });
 
-    onDestroy(()=>{
-        clearInterval(interval_id);
-    });
+    //onDestroy(()=>{
+    //    clearInterval(interval_id);
+    //});
 
     //const FADE={delay:0,duration:1500};
     const FLY_IN={x:200,duration:3000}
