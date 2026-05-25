@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { get_album_by_uid, get_all_albums, type Album } from "$lib/photoprism/albums";
 	import { get_download_token } from "$lib/photoprism/commons";
-    import { DEVKEY } from "$lib/photoprism/devsecrets";
+    //import { DEVKEY } from "$lib/photoprism/devsecrets";
 	import { download_photo, get_random_photo_uid_from_album, type Photo } from "$lib/photoprism/photos";
 	import { onDestroy, onMount } from "svelte";
     import { fly } from 'svelte/transition';
@@ -37,8 +37,8 @@
 
     async function update_image()
     {
-        //const KEY=props.photoprism_key;
-        const KEY=DEVKEY; //Enable for rapid development
+        const KEY=props.photoprism_key;
+        //const KEY=DEVKEY; //Enable for rapid development
         if(KEY!==undefined)
         {
             console.debug("Updating image");
