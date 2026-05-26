@@ -32,8 +32,8 @@
         }
     );
 
-    //const update_interval=30000;
-    const update_interval=5000;
+    const update_interval=30000;
+    //const update_interval=5000;
     let last_photo_offset:number=-1;
     let last_successful_update:number=0;
     
