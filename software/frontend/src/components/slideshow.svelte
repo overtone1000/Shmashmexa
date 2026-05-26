@@ -32,10 +32,50 @@
         }
     );
 
-    const update_interval=30000;
-    //const millis_until_next_image=5000;
+    //const update_interval=30000;
+    const update_interval=5000;
     let last_photo_offset:number=-1;
     let last_successful_update:number=0;
+    
+    async function update_steps(key:string)
+    {
+        console.debug("Updating image");
+
+        const album:(Album|null)=await get_album_by_uid(ALBUM_UID,BASE,key);
+        if(album===null){return;}
+        const photo_result=await get_random_photo_uid_from_album(album,BASE,key,last_photo_offset);
+        if(photo_result===null){return;}
+        const download_token:(string|null)=await get_download_token(BASE,key);
+        if(download_token===null){return;}
+        const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,key,download_token,update_interval);
+        if(downloaded_photo===null){return;}
+
+        last_photo_offset=photo_result.last_offset;
+        const new_image = {blob:downloaded_photo,url:URL.createObjectURL(downloaded_photo)};
+
+        if(images.length<1)
+        {
+            images.push(new_image);
+            image_pointer=images.length-1;
+        }
+        else
+        {
+            let target:number;
+            if(image_pointer===0)
+            {
+                target=1;
+            }
+            else
+            {
+                target=0;
+            }
+            images[target]=new_image;
+            image_pointer=target;
+        }
+
+        last_successful_update=Date.now();
+    }
+
     //let last_update:string=$state("");
     let current_timeout:number|undefined=undefined;
     async function update_image()
@@ -47,41 +87,7 @@
             //const KEY=DEVKEY; //Enable for rapid development
             if(KEY!==undefined)
             {
-                console.debug("Updating image");
-
-                const album:(Album|null)=await get_album_by_uid(ALBUM_UID,BASE,KEY);
-                if(album===null){return;}
-                const photo_result=await get_random_photo_uid_from_album(album,BASE,KEY,last_photo_offset);
-                if(photo_result===null){return;}
-                const download_token:(string|null)=await get_download_token(BASE,KEY);
-                if(download_token===null){return;}
-                const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,KEY,download_token,update_interval);
-                if(downloaded_photo===null){return;}
-
-                last_photo_offset=photo_result.last_offset;
-                const new_image = {blob:downloaded_photo,url:URL.createObjectURL(downloaded_photo)};
-
-                if(images.length<1)
-                {
-                    images.push(new_image);
-                    image_pointer=images.length-1;
-                }
-                else
-                {
-                    let target:number;
-                    if(image_pointer===0)
-                    {
-                        target=1;
-                    }
-                    else
-                    {
-                        target=0;
-                    }
-                    images[target]=new_image;
-                    image_pointer=target;
-                }
-
-                last_successful_update=Date.now();
+                await update_steps(KEY);
             }
         }
         finally

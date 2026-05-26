@@ -34,5 +34,12 @@ export async function download_photo(photo:Photo, base:string, key:string, downl
 {
     let endpoint="/photos/"+photo.UID+"/dl?t="+download_token;
     let result=await photoprism_get_blob(base,endpoint,key,timeout_millis); //allow for a long download time
-    return result;
+    if(result !== null && result.type.startsWith("image"))
+    {
+        return result;
+    }
+    else
+    {
+        return null;
+    }
 }
