@@ -8,6 +8,8 @@ May need
     -Needed to update kiosk user UID
     -Needed to update systemd service? Or is __disabling import of service and then reenabling__ is what actually did it? Did both simultaneously, so not sure.
 
+May need to redeploy the software? Does rebuilding affect this package?
+
 ## Configuration
 
 ### Wifi (wpa supplicant wireless configuration)
