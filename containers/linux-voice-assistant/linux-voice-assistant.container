@@ -1,0 +1,32 @@
+#https://github.com/OHF-Voice/linux-voice-assistant/blob/main/docker-compose.yml
+#https://github.com/OHF-Voice/linux-voice-assistant/blob/main/.env.example
+
+[Unit]
+Description=Linux Voice Assistant
+#After=example_2a.container
+#Wants=mqtt.container zwave-js-ui.container
+#Requires=example_2a.container
+
+[Container]
+ContainerName=linux_voice_assistant
+Image=ghcr.io/ohf-voice/linux-voice-assistant:latest
+
+#Network=host
+#PublishPort=8123:8123
+
+#AddDevice=/dev/zigbee:/dev/zigbee:rw
+#Volume=/mnt/primary/stringent_backup/home_assistant_config:/config
+#Environment=SOMETHING=ITSVALUE
+#EnvironmentFile?? Might work better for this project since it seems to be the primary means of configuration
+
+[Service]
+Restart=always
+
+#Default for systemd is 90 seconds. This allows the container more time to start.
+TimeoutStartSec=180
+#Wait 10 seconds before attempting a restart
+RestartSec=10
+
+[Install]
+# Start by default on boot
+WantedBy=default.target
