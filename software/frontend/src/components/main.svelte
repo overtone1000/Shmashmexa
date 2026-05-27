@@ -79,7 +79,7 @@
     };
 
     let main:Main|undefined = $state(undefined);
-    let parked:boolean = $state(false);
+    let display_on:boolean = $state(true);
 
     const timers:Timer[] = $state([]);
 
@@ -253,7 +253,7 @@
         
         if(command.SetScreenState!==undefined)
         {
-            parked=command.SetScreenState
+            display_on=command.SetScreenState
         }
     }
 
@@ -351,7 +351,7 @@
         <IconTab props={refresh}/>
     </div>
     <div class="main_outer">
-        {#if !parked && main !== undefined}
+        {#if display_on && main !== undefined}
             <div class="main">
                 {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
                     <iframe class="full-size" src={main.iframe_meta.url} title={main.iframe_meta.title}>
