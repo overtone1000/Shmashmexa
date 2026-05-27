@@ -53,7 +53,8 @@
         const downloaded_photo:(Blob|null)=await download_photo(photo_result.photo,BASE,key,download_token,update_interval);
         if(downloaded_photo===null){console.debug("downloaded_photo is null");return;}
 
-        console.debug("Maybe try just setting src URL directly to download URL?")
+        //This won't work because authentication header is necessary for API.
+        //console.debug("Maybe try just setting src URL directly to download URL?")
 
         console.debug("Got photo. Size: " + downloaded_photo.size + ", type: " + downloaded_photo.type);
 
