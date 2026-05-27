@@ -79,7 +79,7 @@
     };
 
     let main:Main|undefined = $state(undefined);
-    let parked:Main|undefined = undefined;
+    let parked:boolean = $state(false);
 
     const timers:Timer[] = $state([]);
 
@@ -251,17 +251,9 @@
             photoprism_key=command.PhotoprismKey;
         }
         
-        if(command.SetScreenState==false)
+        if(command.SetScreenState!==undefined)
         {
-            console.debug("Received monitor off.");
-            parked=main;
-            main=undefined;
-        }
-        else if(command.SetScreenState==true)
-        {
-            console.debug("Received monitor on.");
-            main=parked;
-            parked=undefined;
+            parked=command.SetScreenState
         }
     }
 
@@ -359,7 +351,7 @@
         <IconTab props={refresh}/>
     </div>
     <div class="main_outer">
-        {#if main !== undefined}
+        {#if !parked && main !== undefined}
             <div class="main">
                 {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
                     <iframe class="full-size" src={main.iframe_meta.url} title={main.iframe_meta.title}>
