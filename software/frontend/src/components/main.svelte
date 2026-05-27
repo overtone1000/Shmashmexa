@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { mdiClock, mdiImageMultiple } from '@mdi/js';
+    import { mdiClock, mdiDebugStepInto, mdiImageMultiple } from '@mdi/js';
     import { mdiRefresh } from '@mdi/js';
     import { mdiRobot } from '@mdi/js';
     import IconTab, { type TabProps } from './icon_tab.svelte';
@@ -8,8 +8,46 @@
 	import TimerPage, { type Timer, type TimerState as TimerState } from './timer_page.svelte';
 	import type { AutoTabEntry, Command, TabConfig } from '$lib/commands';
 	import Slideshow from './slideshow.svelte';
+	import type { LegacyComponentType } from 'svelte/legacy';
 
-    console.debug("Starting main.");
+    //Hook console;
+    enum ConsoleType {
+        Debug,
+        Error
+    }
+
+    type ConsoleEntry = {time:number, type:ConsoleType, args:any[]};
+    const console_history:ConsoleEntry[] = $state([]);
+    const baseline_debug_function=console.debug;
+    const baseline_error_function=console.error;
+    function trim_console_history()
+    {
+        const DESIRED_SIZE=50;
+        if(console_history.length>DESIRED_SIZE)
+        {
+            console_history.splice(0,console_history.length-DESIRED_SIZE);
+        }
+    }
+    console.debug = function (...args:any[]){
+        console_history.push({
+            time:Date.now(),
+            type:ConsoleType.Debug,
+            args:args
+        });
+        trim_console_history();
+        baseline_debug_function.apply(console,args);
+    };
+    console.error = function (...args:any[]){
+        console_history.push({
+            time:Date.now(),
+            type:ConsoleType.Error,
+            args:args
+        });
+        trim_console_history();
+        baseline_error_function.apply(console,args);
+    };
+
+    console.debug("Starting main. Debug v1.");
 
     enum MainField {
         iframe,
@@ -78,6 +116,16 @@
         icon_path: mdiImageMultiple,
         disabled: false
     };
+
+    let show_debug:boolean=$state(false);
+    const debug:TabProps = {
+        action: () => {
+            show_debug=!show_debug;
+        },
+        icon_label: "debug",
+        icon_path: mdiDebugStepInto,
+        disabled: false
+    }
 
     function set_manual_tab(tab_props:TabProps)
     {
@@ -199,16 +247,19 @@
         
         if(command.PhotoprismKey)
         {
+            console.debug("Received photoprism key.");
             photoprism_key=command.PhotoprismKey;
         }
         
         if(command.SetScreenState==false)
         {
+            console.debug("Received monitor off.");
             parked=main;
             main=undefined;
         }
         else if(command.SetScreenState==true)
         {
+            console.debug("Received monitor on.");
             main=parked;
             parked=undefined;
         }
@@ -217,7 +268,7 @@
     //let socket:WebSocket|undefined=$state(undefined);
     function open_socket(){
         const socket_url = "ws:/"+location.host;
-        console.debug("Opening websocket on");
+        console.debug("Opening websocket");
         const socket = new WebSocket(socket_url);
 
         //const test = () => {
@@ -304,21 +355,41 @@
         <div class="spacer"></div>
         <Time/>
         <div class="spacer"></div>
+        <IconTab props={debug}/>
         <IconTab props={refresh}/>
     </div>
-    {#if main !== undefined}
-        {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
-            <iframe class="full-size" src={main.iframe_meta.url} title={main.iframe_meta.title}>
-                <p>iframe unsupported</p>
-            </iframe>
-        {:else if main.field === MainField.component && main.component_meta !== undefined}
-            {#if main.component_meta === ComponentType.clock}
-                <TimerPage timers={timers}/>
-            {:else if main.component_meta === ComponentType.slideshow}
-                <Slideshow photoprism_key={photoprism_key}/>
-            {/if}
+    <div class="main_outer">
+        {#if main !== undefined}
+            <div class="main">
+                {#if main.field === MainField.iframe && main.iframe_meta !== undefined}
+                    <iframe class="full-size" src={main.iframe_meta.url} title={main.iframe_meta.title}>
+                        <p>iframe unsupported</p>
+                    </iframe>
+                {:else if main.field === MainField.component && main.component_meta !== undefined}
+                    {#if main.component_meta === ComponentType.clock}
+                        <TimerPage timers={timers}/>
+                    {:else if main.component_meta === ComponentType.slideshow}
+                        <Slideshow photoprism_key={photoprism_key}/>
+                    {/if}
+                {/if}
+            </div>
         {/if}
-    {/if}
+        {#if show_debug}
+            <div class="console">
+                {#each console_history as entry}
+                    {#if entry.type===ConsoleType.Debug}
+                    <div class="console_entry">
+                        {entry.time.toString() + ": " + entry.args.toString()}
+                    </div>
+                    {:else if entry.type===ConsoleType.Error}
+                    <div class="console_entry error">
+                        {entry.time.toString() + ": " + entry.args.toString()}
+                    </div>
+                    {/if}
+                {/each}
+            </div>
+        {/if}
+    </div>
 </div>
 
 <style>
@@ -352,6 +423,49 @@
     {
         flex-shrink: true;
         width:100%;
+    }
+    .main_outer
+    {
+        width: 100%;
+        height: 100%;
+        overflow-y: hidden;
+        overflow-x: hidden;
+        display: grid;
+        grid-template-columns: 100%;
+        grid-template-rows: 100%;
+        place-items: center;
+    }
+    .main
+    {
+        grid-area: 1 / 1;
+        max-width:100%;
+        max-height:100%;
+        height:100%;
+        width:100%;
+    }
+    .console
+    {
+        grid-area: 1 / 1;
+        max-width:100%;
+        max-height:100%;
+        height:100%;
+        width:100%;
+        opacity: 0.75;
+        background-color: black;
+        color:white;
+        display:flex;
+        flex-direction: column;
+        justify-content: end;
+        font-size: small;
+    }
+    .console_entry
+    {
+        width:100%;
+        height:min-content;
+    }
+    .error
+    {
+        color:red;
     }
     * {
         color-scheme: dark;
