@@ -5,7 +5,7 @@ Description=Linux Voice Assistant
 #Requires=example_2a.container
 
 [Container]
-ContainerName=linux_voice_assistant
+ContainerName=linux-voice-assistant
 Image=ghcr.io/ohf-voice/linux-voice-assistant:latest
 
 #Network=host
@@ -15,6 +15,16 @@ Image=ghcr.io/ohf-voice/linux-voice-assistant:latest
 #Volume=/mnt/primary/stringent_backup/home_assistant_config:/config
 #Environment=SOMETHING=ITSVALUE
 #EnvironmentFile?? Might work better for this project since it seems to be the primary means of configuration
+
+AddCapability=SYS_NICE
+GroupAdd=audio
+
+Volume=linux-voice-assistant-wakeword_data:/app/local
+Volume=linux-voice-assistant-wakeword_custom:/app/wakewords/custom
+Volume=linux-voice-assistant-configuration:/app/configuration
+Volume=linux-voice-assistant-sounds_custom:/app/sounds/custom
+
+Volume=/run/user/1000:/run/user/1000
 
 [Service]
 Restart=always
